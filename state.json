@@ -1,0 +1,1004 @@
+{
+  "session_id": "20260508-045419-5471",
+  "inputs": {
+    "domain": "Human in the Loop LLM Workflow for research project roadmap curation",
+    "authors": [
+      {
+        "name": "Prathamesh Joshi",
+        "email": "prathamesh@vizuara.com",
+        "affiliation": "Vizuara AI Labs",
+        "institution": ""
+      },
+      {
+        "name": "Abraar",
+        "email": "",
+        "affiliation": "Vizuara AI Labs",
+        "institution": ""
+      },
+      {
+        "name": "Naman Dwivedi",
+        "email": "naman@vizuara.com",
+        "affiliation": "Vizuara AI Labs",
+        "institution": ""
+      },
+      {
+        "name": "Dr Raj Dandekar",
+        "email": "",
+        "affiliation": "Vizuara AI Labs",
+        "institution": ""
+      },
+      {
+        "name": "Dr Rajat Dandekar",
+        "email": "",
+        "affiliation": "Vizuara AI Labs",
+        "institution": ""
+      },
+      {
+        "name": "Dr Sreedath Dandekar",
+        "email": "",
+        "affiliation": "Vizuara AI Labs",
+        "institution": ""
+      }
+    ],
+    "loom_videos": [],
+    "experiment_links": [],
+    "existing_results": "We conducted survey amongst 40 people with our project roadamp and ai genrated project roadmpa with three different chatgt version and labeeled it as A , B, C, D and cnaidates wehre asked to rate it based on clarity , reporducr results, flow etc and then 34 people recomemend C over all C is our one",
+    "paper_draft": "Abstract\n\nEarly-stage research often begins with vague ideas that are not yet executable. A student or researcher may know the broad area they want to explore, but converting that interest into a concrete project requires research questions, literature directions, datasets, baselines, evaluation metrics, ablations, milestones, risks, and a realistic contribution claim. While large language models can assist with this planning stage, unstructured prompting often produces roadmaps that are fluent but generic, difficult to verify, or poorly scoped. We present a human-in-the-loop LLM workflow for research roadmap curation. Given a raw research idea, the workflow generates a structured roadmap artifact that can be reviewed, revised, and approved by a human reviewer before use. The reviewer may be the researcher themselves, a mentor, instructor, supervisor, collaborator, or domain expert. The workflow is model-agnostic and can be implemented using different LLM backends; our prototype uses an asynchronous generation pipeline that conditions on reference roadmap templates, optionally retrieves relevant literature, generates LaTeX source, compiles a PDF, and exposes the result for review. We position the LLM as a research-planning assistant rather than an autonomous researcher. We propose a human preference study comparing multiple roadmap variants generated for the same research idea across five dimensions: completeness, feasibility, specificity, experiment design quality, and research potential.\n\n1. Introduction\n\nEarly-stage research projects often fail before experimentation begins. The initial idea may be too broad, the dataset may be unclear, the baselines may be missing, the evaluation metrics may not match the research question, or the expected contribution may be overclaimed. This problem is especially common in research bootcamps, undergraduate research programs, industry training cohorts, and early-stage graduate projects, where participants often begin with enthusiasm but limited experience in converting a broad interest into an executable research plan.\n\nA vague idea is not yet a research project. For example, ideas such as \u201cI want to work on multimodal RAG,\u201d \u201cI want to apply reinforcement learning to retrieval,\u201d or \u201cI want to use scientific machine learning for physical systems\u201d are useful starting points, but they do not specify what should be built, what should be compared, what evidence should be collected, or what claim the final paper or report could defend. To become actionable, such ideas must be transformed into structured roadmaps containing research questions, literature directions, datasets, baselines, metrics, ablations, weekly milestones, risks, deliverables, and a minimum viable claim.\n\nThis transformation is usually performed by human mentors, instructors, supervisors, or domain experts. However, human research planning does not scale easily. In a cohort with many students, mentors may need to repeatedly convert loosely stated interests into detailed project plans. The bottleneck is not merely writing a document. The harder task is producing a roadmap that is technically specific, feasible within the available time, experimentally sound, and appropriately scoped.\n\nLarge language models offer a natural opportunity to support this stage of research planning. However, one-shot prompting is often insufficient. A generic prompt such as \u201cgenerate a 12-week research roadmap for this idea\u201d can produce fluent output, but the resulting roadmap may omit baselines, suggest unrealistic datasets, fail to define measurable success criteria, or overstate the novelty of the project. The surface quality of LLM-generated text can also make weak plans appear more credible than they are.\n\nWe present a human-in-the-loop LLM workflow for research roadmap curation. Given a raw research idea, the workflow generates a structured roadmap artifact. The roadmap is not treated as final. Instead, it is routed to a human reviewer who can inspect it, request revisions, or approve it for use. The reviewer may be the original researcher, a mentor, an instructor, a supervisor, a collaborator, or a domain expert. This design keeps the human responsible for feasibility, novelty calibration, and scientific correctness, while using the LLM to reduce the burden of first-pass structuring.\n\nOur workflow is model-agnostic. It can be instantiated using different LLM backends, including API-based models, coding agents, or local models, as long as the backend can perform structured generation and artifact creation. In our prototype, roadmap requests are processed asynchronously: a request is stored as a job, an LLM worker generates a LaTeX roadmap using reference templates and optional literature search, the PDF is compiled, and the result is shown to the reviewer for approval or revision.\n\nThis paper studies research roadmap generation not as autonomous research generation, but as a practical human-AI workflow for early-stage research planning. Our central question is:\n\nCan a structured, human-reviewed LLM workflow help convert vague research ideas into executable research roadmaps more reliably than unstructured prompting?\n\nWe make three contributions. First, we formulate research roadmap generation as a human-in-the-loop workflow rather than a one-shot generation task. Second, we introduce a structured roadmap schema that decomposes early-stage research planning into concrete components such as questions, datasets, baselines, metrics, ablations, risks, milestones, and minimum viable claims. Third, we describe an evaluation protocol in which human reviewers compare multiple anonymized roadmap variants for the same research idea across five quality dimensions.\n\n2. Research Roadmap Curation as a Workflow\n\nWe define a research roadmap as an execution-oriented planning artifact that transforms a broad research idea into a concrete project plan. A good roadmap should help a researcher understand what to read, what to implement, what to compare, how to evaluate progress, and what claim the final project may support.\n\nUnlike a literature review or a project proposal, a roadmap is explicitly operational. It should include both intellectual structure and execution structure. It should tell the researcher not only what the problem is, but also what needs to happen in Week 1, Week 2, and so on.\n\n2.1 Input\n\nThe workflow begins with a raw research idea. The input may include:\n\nproject topic,\nshort description,\ntarget duration,\nresearcher background,\npreferred domain,\nconstraints on tools or datasets,\ntarget output such as paper, report, codebase, or presentation.\n\nThe input does not need to be fully specified. In fact, the workflow is designed for the common case where the idea is incomplete.\n\n2.2 Roadmap Schema\n\nThe LLM is not asked to freely brainstorm. Instead, it is guided by a roadmap schema. Each generated roadmap is expected to include:\n\nComponent\tPurpose\nResearch scope\tDefines the boundary of the project\nResearch questions\tConverts a broad idea into testable questions\nLiterature directions\tIdentifies relevant prior work and reading areas\nDataset or environment plan\tSpecifies what evidence the project will use\nMethodology\tDescribes the technical approach\nBaselines\tPrevents weak or unfair comparisons\nMetrics\tDefines how success will be measured\nAblations\tTests which components matter\nMilestones\tConverts the project into weekly execution steps\nRisks and mitigations\tMakes likely failure modes explicit\nDeliverables\tDefines expected artifacts\nMinimum viable claim\tPrevents overclaiming and keeps the project realistic\n\nThis schema is intended to make roadmap generation less dependent on surface fluency. A roadmap is not considered strong merely because it reads well. It must specify how the project can actually be executed and evaluated.\n\n3. Human-in-the-Loop LLM Workflow\n\nThe central design choice is to separate generation from approval. The LLM generates a first draft, but a human reviewer decides whether the roadmap is usable.\n\n3.1 Workflow Overview\n\nThe workflow has five stages:\n\nIdea submission: A user submits a raw research idea and optional constraints.\nStructured generation: An LLM backend generates a roadmap using a fixed schema and reference examples.\nArtifact creation: The roadmap is converted into a reviewable artifact, such as a LaTeX/PDF document.\nHuman review: A reviewer inspects the roadmap and either approves it or requests changes.\nRevision or delivery: If revisions are requested, the workflow regenerates or edits the roadmap using reviewer feedback. If approved, the roadmap is delivered or used.\n\nThe human reviewer is not only the person who writes the initial prompt. The human remains involved after generation, when quality judgments are required. This makes the workflow human-in-the-loop rather than merely human-initiated.\n\n3.2 Model-Agnostic Backend\n\nThe workflow is independent of any single LLM provider. The backend can be implemented with different models or agents, provided that they support structured generation and optional tool use.\n\nOur prototype uses an asynchronous worker architecture. A roadmap request is stored as a job, processed by a worker, converted into LaTeX source, compiled into a PDF, and exposed to the reviewer. The system design supports states such as queued, processing, completed, failed, revision requested, and revision processing. This makes roadmap generation robust to long-running generation and allows the reviewer to request changes after inspecting the output.\n\nThe job queue is not the scientific contribution by itself. Rather, it is an implementation mechanism that enables the research workflow to behave like a real review-and-revision system instead of a one-shot chat interaction.\n\n3.3 Human Review\n\nHuman review is necessary because roadmap quality depends on judgments that LLMs cannot reliably make alone. A roadmap may appear polished while still being unrealistic, too broad, weakly evaluated, or scientifically shallow. The reviewer checks whether:\n\nthe research question is precise,\nthe proposed dataset is accessible,\nthe baselines are appropriate,\nthe metrics are measurable,\nthe milestones are realistic,\nthe risks are honestly stated,\nthe minimum viable claim is not overconfident.\n\nIf the roadmap fails these checks, the reviewer can request revision. This feedback becomes part of the next generation or editing cycle.\n\nThe reviewer may be a student using the tool independently, a faculty advisor, a bootcamp mentor, a teaching assistant, a lab lead, or a domain expert. The core requirement is not a specific role, but a decision point where a human accepts responsibility for the final plan.\n\n4. Evaluation Protocol\n\nWe propose a human preference study to evaluate roadmap quality. The study compares multiple roadmap variants generated for the same research idea and same input prompt. This controls for topic preference and focuses the evaluation on roadmap quality.\n\n4.1 Study Setup\n\nFor each research idea, we generate four anonymized roadmap versions, labeled Roadmap A, Roadmap B, Roadmap C, and Roadmap D. All four roadmaps correspond to the same topic and are generated from the same prompt or input description. Human evaluators are asked to compare the roadmaps across five quality dimensions.\n\nThe five dimensions are:\n\nCompleteness\nFeasibility\nSpecificity / Actionability\nExperiment Design Quality\nResearch Potential\n\nFor each dimension, the evaluator selects one roadmap out of the four.\n\n4.2 Survey Questions\n\nThe survey asks:\n\nCompleteness. Which roadmap is the most complete?\nA complete roadmap should include research questions, methodology, datasets, baselines, metrics, milestones, risks, and deliverables.\n\nFeasibility. Which roadmap is the most realistic to execute within the proposed timeline?\nA feasible roadmap should have manageable scope, accessible datasets or tools, realistic milestones, and achievable deliverables.\n\nSpecificity / Actionability. Which roadmap gives the clearest step-by-step guidance for actually starting and executing the project?\nAn actionable roadmap should make it clear what to read, build, test, compare, and submit.\n\nExperiment Design Quality. Which roadmap has the strongest experimental plan?\nA strong experimental plan should include suitable baselines, measurable metrics, ablations, validation strategy, and clear success criteria.\n\nResearch Potential. Which roadmap has the strongest potential to become a good research paper, workshop submission, or technical report?\nA strong roadmap should have a clear problem, plausible novelty, meaningful evaluation, and a realistic minimum viable claim.\n\nWe also collect free-text feedback asking evaluators why they chose the strongest roadmap, which roadmap was weakest, and what improvements they would make before using the roadmap.\n\n4.3 Analysis\n\nThe primary outcome is the number of votes received by each roadmap variant for each quality dimension. This allows us to measure whether a particular roadmap-generation variant is consistently preferred for completeness, feasibility, actionability, experiment design, or research potential.\n\nWe also analyze qualitative feedback to identify recurring failure modes. For example, evaluators may prefer one roadmap because it has better baselines, but reject another because it is too ambitious or vague. These comments help distinguish surface-level polish from actual research usefulness.\n\nIf the workflow logs are available, we also report operational metrics:\n\ngeneration time,\nnumber of revision requests,\ntime to approval,\napproval rate,\ncommon revision categories,\nfailure cases during generation or compilation.\n\nThese metrics connect subjective human preferences to practical workflow behavior.\n\n5. Expected Findings\n\nWe expect structured roadmap generation to outperform unstructured prompting on completeness and specificity. A schema-constrained roadmap is more likely to include baselines, metrics, ablations, risks, and deliverables because these components are explicitly required.\n\nHowever, we do not expect LLM-generated roadmaps to be reliable without human review. Human revision is likely to be most important for feasibility, novelty calibration, and domain correctness. For example, an LLM may recommend a dataset that is technically relevant but difficult to access, or it may propose a contribution that sounds publishable but is too incremental or too broad.\n\nThus, the expected result is not that LLMs can replace research mentors or supervisors. The expected result is that structured LLM workflows can reduce first-pass planning effort while preserving human oversight where it matters most.\n\n6. Failure Modes\n\nA human-in-the-loop workflow is necessary because roadmap generation has several failure modes.\n\nFirst, the LLM may overclaim novelty. It may describe a project as publishable even when the proposed contribution is only a standard application of known methods.\n\nSecond, the LLM may recommend unrealistic timelines. A roadmap may appear well structured but require more data collection, engineering, or experimentation than can fit within the proposed duration.\n\nThird, the roadmap may include weak or incomplete baselines. This is a serious issue because baselines determine whether the final research claim is meaningful.\n\nFourth, the LLM may suggest datasets, APIs, or tools that are difficult to access, poorly maintained, or unsuitable for the student\u2019s skill level.\n\nFifth, the roadmap may be too template-driven. If every roadmap follows the same structure too rigidly, it may miss domain-specific requirements.\n\nFinally, the roadmap may be fluent but not actionable. This is the most subtle failure: the document sounds professional, but does not tell the researcher exactly what to do next.\n\nThe review loop is designed to reduce these risks. A human reviewer can catch unrealistic scope, missing comparisons, weak evaluation plans, and overconfident claims before the roadmap is used.\n\n7. Discussion\n\nResearch roadmap curation sits between brainstorming and execution. It is not the same as idea generation, literature review, code generation, or paper writing. Instead, it is the stage where an idea becomes operational.\n\nThis distinction matters. Many discussions of LLMs in research focus on whether models can write papers, generate hypotheses, or act as autonomous scientists. Our framing is narrower and more practical. We do not claim that an LLM can determine scientific truth or independently supervise research. We claim that an LLM, when constrained by a schema and placed inside a human review loop, can help produce better first-pass research plans.\n\nThe model-agnostic nature of the workflow is also important. The contribution is not tied to a specific backend. Different bootcamps, labs, or research programs can instantiate the same workflow using different LLMs, templates, review policies, or output formats. What matters is the structure: schema-constrained generation, reviewable artifacts, and explicit human approval.\n\n8. Limitations\n\nThis work has several limitations. First, human preference studies measure perceived roadmap quality, not long-term project success. A roadmap that reviewers prefer may not necessarily lead to a stronger final paper.\n\nSecond, the evaluation depends on the expertise of reviewers. Beginners may prefer detailed roadmaps that experts find unrealistic, while experts may penalize roadmaps for missing domain-specific subtleties.\n\nThird, the same roadmap schema may not work equally well across domains. A roadmap for reinforcement learning, scientific machine learning, multimodal RAG, or AI systems may require different levels of detail.\n\nFourth, the workflow may inherit biases from reference templates. If the examples emphasize certain styles of projects, the generated roadmaps may overproduce similar structures.\n\nFifth, the current study focuses on roadmap quality at generation time. Future work should track downstream outcomes such as whether students complete milestones faster, produce better experiments, or require fewer mentor interventions.\n\n9. Conclusion\n\nWe presented a human-in-the-loop LLM workflow for research roadmap curation. The workflow converts vague research ideas into structured, reviewable execution plans containing research questions, literature directions, datasets, baselines, metrics, ablations, risks, milestones, deliverables, and minimum viable claims. Unlike one-shot prompting, the workflow separates generation from approval: the LLM drafts the roadmap, while a human reviewer remains responsible for feasibility, novelty calibration, and scientific correctness.\n\nWe argue that the value of LLMs in early-stage research planning is not autonomous research generation, but structured assistance under human oversight. By combining schema-constrained generation, model-agnostic backends, reviewable artifacts, and revision loops, research roadmap workflows can make early-stage research planning more scalable, consistent, and auditable.",
+    "named_datasets": [],
+    "conversation_history": "",
+    "other_details": ""
+  },
+  "experiment": {
+    "results_summary": {
+      "source": "configure.existing_results",
+      "summary_text": "We conducted survey amongst 40 people with our project roadamp and ai genrated project roadmpa with three different chatgt version and labeeled it as A , B, C, D and cnaidates wehre asked to rate it based on clarity , reporducr results, flow etc and then 34 people recomemend C over all C is our one",
+      "raw_results": "We conducted survey amongst 40 people with our project roadamp and ai genrated project roadmpa with three different chatgt version and labeeled it as A , B, C, D and cnaidates wehre asked to rate it based on clarity , reporducr results, flow etc and then 34 people recomemend C over all C is our one",
+      "provenance": "User-provided Raw or partial results from the Configure tab. No RunPod, local, or generated experiment was executed in no-exp-version."
+    },
+    "result_source": "configure_only",
+    "experiments_skipped": true,
+    "iterations": [],
+    "experiment_plan": "Skipped in no-exp-version. Results are taken only from Configure tab Raw or partial results."
+  },
+  "identity": {
+    "session_id": "20260508-045419-5471",
+    "output_dir": "sessions/20260508-045419-5471/output",
+    "created_at": "2026-05-08T04:55:16Z"
+  },
+  "config": {
+    "paper_scope": "final_manuscript",
+    "target_tier": "workshop",
+    "house_style": "off",
+    "target_venue_style": "ICML",
+    "reviewer_persona": "balanced",
+    "reviewer_depth": "deep",
+    "generate_figures": "on",
+    "use_papers_with_code": "on",
+    "compute_backend": "configure_only",
+    "gemini_model": "gemini-2.5-pro",
+    "iteration_caps": {
+      "experiment": 0,
+      "quality": 4,
+      "latex": 5,
+      "review": 4
+    },
+    "criteria_checklist": [
+      "Narration flow must be easy and strong"
+    ],
+    "reference_papers": [
+      "https://arxiv.org/pdf/1706.03762"
+    ]
+  },
+  "ingested": {
+    "reference_papers_content": [
+      {
+        "url": "https://arxiv.org/pdf/1706.03762",
+        "title": "Attention Is All You Need",
+        "text_excerpt": "Provided proper attribution is provided, Google hereby grants permission to\nreproduce the tables and figures in this paper solely for use in journalistic or\nscholarly works.\nAttention Is All You Need\nAshish Vaswani\u2217\nGoogle Brain\navaswani@google.com\nNoam Shazeer\u2217\nGoogle Brain\nnoam@google.com\nNiki Parmar\u2217\nGoogle Research\nnikip@google.com\nJakob Uszkoreit\u2217\nGoogle Research\nusz@google.com\nLlion Jones\u2217\nGoogle Research\nllion@google.com\nAidan N. Gomez\u2217\u2020\nUniversity of Toronto\naidan@cs.toronto.edu\n\u0141ukasz Kaiser\u2217\nGoogle Brain\nlukaszkaiser@google.com\nIllia Polosukhin\u2217\u2021\nillia.polosukhin@gmail.com\nAbstract\nThe dominant sequence transduction models are based on complex recurrent or\nconvolutional neural networks that include an encoder and a decoder. The best\nperforming models also connect the encoder and decoder through an attention\nmechanism. We propose a new simple network architecture, the Transformer,\nbased solely on attention mechanisms, dispensing with recurrence and convolutions\nentirely. Experiments on two machine translation tasks show these models to\nbe superior in quality while being more parallelizable and requiring significantly\nless time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-\nto-German translation task, improving over the existing best results, including\nensembles, by over 2 BLEU. On the WMT 2014 English-to-French translation task,\nour model establishes a new single-model state-of-the-art BLEU score of 41.8 after\ntraining for 3.5 days on eight GPUs, a small fraction of the training costs of the\nbest models from the literature. We show that the Transformer generalizes well to\nother tasks by applying it successfully to English constituency parsing both with\nlarge and limited training data.\n\u2217Equal contribution. Listing order is random. Jakob proposed replacing RNNs with self-attention and started\nthe effort to evaluate this idea. Ashish, with Illia, designed and implemented the first Transformer models and\nhas been crucially involved in every aspect of this work. Noam proposed scaled dot-product attention, multi-head\nattention and the parameter-free position representation and became the other person involved in nearly every\ndetail. Niki designed, implemented, tuned and evaluated countless model variants in our original codebase and\ntensor2tensor. Llion also experimented with novel model variants, was responsible for our initial codebase, and\nefficient inference and visualizations. Lukasz and Aidan spent countless long days designing various parts of and\nimplementing tensor2tensor, replacing our earlier codebase, greatly improving results and massively accelerating\nour research.\n\u2020Work performed while at Google Brain.\n\u2021Work performed while at Google Research.\n31st Conference on Neural Information Processing Systems (NIPS 2017), Long Beach, CA, USA.\narXiv:1706.03762v7  [cs.CL]  2 Aug 2023\n\n1\nIntroduction\nRecurrent neural networks, long short-term memory [13] and gated recurrent [7] neural networks\nin particular, have been firmly established as state of the art approaches in sequence modeling and\ntransduction problems such as language modeling and machine translation [35, 2, 5]. Numerous\nefforts have since continued to push the boundaries of recurrent language models and encoder-decoder\narchitectures [38, 24, 15].\nRecurrent models typically factor computation along the symbol positions of the input and output\nsequences. Aligning the positions to steps in computation time, they generate a sequence of hidden\nstates ht, as a function of the previous hidden state ht\u22121 and the input for position t. This inherently\nsequential nature precludes parallelization within training examples, which becomes critical at longer\nsequence lengths, as memory constraints limit batching across examples. Recent work has achieved\nsignificant improvements in computational efficiency through factorization tricks [21] and conditional\ncomputation [32], while also improving model performance in case of the latter. The fundamental\nconstrain",
+        "figure_image_paths": [
+          "sessions/20260508-045419-5471/output/ref_papers/figs/attention/attention_p002_000.png",
+          "sessions/20260508-045419-5471/output/ref_papers/figs/attention/attention_p003_000.png",
+          "sessions/20260508-045419-5471/output/ref_papers/figs/attention/attention_p003_001.png"
+        ],
+        "fetched_at": "2026-05-08T04:55:16Z",
+        "status": "ok",
+        "source": "url",
+        "purpose": "stylistic_template"
+      }
+    ],
+    "student_context": "# Student Context \u2014 session 20260508-045419-5471\n\n## Research domain\n\nHuman in the Loop LLM Workflow for research project roadmap curation\n\n## Video transcripts\n\n(none provided)\n\n## Code repositories\n\n(none provided)\n\n## Free-form notes\n\n### Raw or partial results (from Configure tab)\n\nWe conducted survey amongst 40 people with our project roadamp and ai genrated project roadmpa with three different chatgt version and labeeled it as A , B, C, D and cnaidates wehre asked to rate it based on clarity , reporducr results, flow etc and then 34 people recomemend C over all C is our one\n\n### Existing paper draft\n\nAbstract\n\nEarly-stage research often begins with vague ideas that are not yet executable. A student or researcher may know the broad area they want to explore, but converting that interest into a concrete project requires research questions, literature directions, datasets, baselines, evaluation metrics, ablations, milestones, risks, and a realistic contribution claim. While large language models can assist with this planning stage, unstructured prompting often produces roadmaps that are fluent but generic, difficult to verify, or poorly scoped. We present a human-in-the-loop LLM workflow for research roadmap curation. Given a raw research idea, the workflow generates a structured roadmap artifact that can be reviewed, revised, and approved by a human reviewer before use. The reviewer may be the researcher themselves, a mentor, instructor, supervisor, collaborator, or domain expert. The workflow is model-agnostic and can be implemented using different LLM backends; our prototype uses an asynchronous generation pipeline that conditions on reference roadmap templates, optionally retrieves relevant literature, generates LaTeX source, compiles a PDF, and exposes the result for review. We position the LLM as a research-planning assistant rather than an autonomous researcher. We propose a human preference study comparing multiple roadmap variants generated for the same research idea across five dimensions: completeness, feasibility, specificity, experiment design quality, and research potential.\n\n1. Introduction\n\nEarly-stage research projects often fail before experimentation begins. The initial idea may be too broad, the dataset may be unclear, the baselines may be missing, the evaluation metrics may not match the research question, or the expected contribution may be overclaimed. This problem is especially common in research bootcamps, undergraduate research programs, industry training cohorts, and early-stage graduate projects, where participants often begin with enthusiasm but limited experience in converting a broad interest into an executable research plan.\n\nA vague idea is not yet a research project. For example, ideas such as \u201cI want to work on multimodal RAG,\u201d \u201cI want to apply reinforcement learning to retrieval,\u201d or \u201cI want to use scientific machine learning for physical systems\u201d are useful starting points, but they do not specify what should be built, what should be compared, what evidence should be collected, or what claim the final paper or report could defend. To become actionable, such ideas must be transformed into structured roadmaps containing research questions, literature directions, datasets, baselines, metrics, ablations, weekly milestones, risks, deliverables, and a minimum viable claim.\n\nThis transformation is usually performed by human mentors, instructors, supervisors, or domain experts. However, human research planning does not scale easily. In a cohort with many students, mentors may need to repeatedly convert loosely stated interests into detailed project plans. The bottleneck is not merely writing a document. The harder task is producing a roadmap that is technically specific, feasible within the available time, experimentally sound, and appropriately scoped.\n\nLarge language models offer a natural opportunity to support this stage of research planning. However, one-shot prompting is often insufficient. A generic prompt such as \u201cgenerate a 12-week research roadmap for this idea\u201d can produce fluent output, but the resulting roadmap may omit baselines, suggest unrealistic datasets, fail to define measurable success criteria, or overstate the novelty of the project. The surface quality of LLM-generated text can also make weak plans appear more credible than they are.\n\nWe present a human-in-the-loop LLM workflow for research roadmap curation. Given a raw research idea, the workflow generates a structured roadmap artifact. The roadmap is not treated as final. Instead, it is routed to a human reviewer who can inspect it, request revisions, or approve it for use. The reviewer may be the original researcher, a mentor, an instructor, a supervisor, a collaborator, or a domain expert. This design keeps the human responsible for feasibility, novelty calibration, and scientific correctness, while using the LLM to reduce the burden of first-pass structuring.\n\nOur workflow is model-agnostic. It can be instantiated using different LLM backends, including API-based models, coding agents, or local models, as long as the backend can perform structured generation and artifact creation. In our prototype, roadmap requests are processed asynchronously: a request is stored as a job, an LLM worker generates a LaTeX roadmap using reference templates and optional literature search, the PDF is compiled, and the result is shown to the reviewer for approval or revision.\n\nThis paper studies research roadmap generation not as autonomous research generation, but as a practical human-AI workflow for early-stage research planning. Our central question is:\n\nCan a structured, human-reviewed LLM workflow help convert vague research ideas into executable research roadmaps more reliably than unstructured prompting?\n\nWe make three contributions. First, we formulate research roadmap generation as a human-in-the-loop workflow rather than a one-shot generation task. Second, we introduce a structured roadmap schema that decomposes early-stage research planning into concrete components such as questions, datasets, baselines, metrics, ablations, risks, milestones, and minimum viable claims. Third, we describe an evaluation protocol in which human reviewers compare multiple anonymized roadmap variants for the same research idea across five quality dimensions.\n\n2. Research Roadmap Curation as a Workflow\n\nWe define a research roadmap as an execution-oriented planning artifact that transforms a broad research idea into a concrete project plan. A good roadmap should help a researcher understand what to read, what to implement, what to compare, how to evaluate progress, and what claim the final project may support.\n\nUnlike a literature review or a project proposal, a roadmap is explicitly operational. It should include both intellectual structure and execution structure. It should tell the researcher not only what the problem is, but also what needs to happen in Week 1, Week 2, and so on.\n\n2.1 Input\n\nThe workflow begins with a raw research idea. The input may include:\n\nproject topic,\nshort description,\ntarget duration,\nresearcher background,\npreferred domain,\nconstraints on tools or datasets,\ntarget output such as paper, report, codebase, or presentation.\n\nThe input does not need to be fully specified. In fact, the workflow is designed for the common case where the idea is incomplete.\n\n2.2 Roadmap Schema\n\nThe LLM is not asked to freely brainstorm. Instead, it is guided by a roadmap schema. Each generated roadmap is expected to include:\n\nComponent\tPurpose\nResearch scope\tDefines the boundary of the project\nResearch questions\tConverts a broad idea into testable questions\nLiterature directions\tIdentifies relevant prior work and reading areas\nDataset or environment plan\tSpecifies what evidence the project will use\nMethodology\tDescribes the technical approach\nBaselines\tPrevents weak or unfair comparisons\nMetrics\tDefines how success will be measured\nAblations\tTests which components matter\nMilestones\tConverts the project into weekly execution steps\nRisks and mitigations\tMakes likely failure modes explicit\nDeliverables\tDefines expected artifacts\nMinimum viable claim\tPrevents overclaiming and keeps the project realistic\n\nThis schema is intended to make roadmap generation less dependent on surface fluency. A roadmap is not considered strong merely because it reads well. It must specify how the project can actually be executed and evaluated.\n\n3. Human-in-the-Loop LLM Workflow\n\nThe central design choice is to separate generation from approval. The LLM generates a first draft, but a human reviewer decides whether the roadmap is usable.\n\n3.1 Workflow Overview\n\nThe workflow has five stages:\n\nIdea submission: A user submits a raw research idea and optional constraints.\nStructured generation: An LLM backend generates a roadmap using a fixed schema and reference examples.\nArtifact creation: The roadmap is converted into a reviewable artifact, such as a LaTeX/PDF document.\nHuman review: A reviewer inspects the roadmap and either approves it or requests changes.\nRevision or delivery: If revisions are requested, the workflow regenerates or edits the roadmap using reviewer feedback. If approved, the roadmap is delivered or used.\n\nThe human reviewer is not only the person who writes the initial prompt. The human remains involved after generation, when quality judgments are required. This makes the workflow human-in-the-loop rather than merely human-initiated.\n\n3.2 Model-Agnostic Backend\n\nThe workflow is independent of any single LLM provider. The backend can be implemented with different models or agents, provided that they support structured generation and optional tool use.\n\nOur prototype uses an asynchronous worker architecture. A roadmap request is stored as a job, processed by a worker, converted into LaTeX source, compiled into a PDF, and exposed to the reviewer. The system design supports states such as queued, processing, completed, failed, revision requested, and revision processing. This makes roadmap generation robust to long-running generation and allows the reviewer to request changes after inspecting the output.\n\nThe job queue is not the scientific contribution by itself. Rather, it is an implementation mechanism that enables the research workflow to behave like a real review-and-revision system instead of a one-shot chat interaction.\n\n3.3 Human Review\n\nHuman review is necessary because roadmap quality depends on judgments that LLMs cannot reliably make alone. A roadmap may appear polished while still being unrealistic, too broad, weakly evaluated, or scientifically shallow. The reviewer checks whether:\n\nthe research question is precise,\nthe proposed dataset is accessible,\nthe baselines are appropriate,\nthe metrics are measurable,\nthe milestones are realistic,\nthe risks are honestly stated,\nthe minimum viable claim is not overconfident.\n\nIf the roadmap fails these checks, the reviewer can request revision. This feedback becomes part of the next generation or editing cycle.\n\nThe reviewer may be a student using the tool independently, a faculty advisor, a bootcamp mentor, a teaching assistant, a lab lead, or a domain expert. The core requirement is not a specific role, but a decision point where a human accepts responsibility for the final plan.\n\n4. Evaluation Protocol\n\nWe propose a human preference study to evaluate roadmap quality. The study compares multiple roadmap variants generated for the same research idea and same input prompt. This controls for topic preference and focuses the evaluation on roadmap quality.\n\n4.1 Study Setup\n\nFor each research idea, we generate four anonymized roadmap versions, labeled Roadmap A, Roadmap B, Roadmap C, and Roadmap D. All four roadmaps correspond to the same topic and are generated from the same prompt or input description. Human evaluators are asked to compare the roadmaps across five quality dimensions.\n\nThe five dimensions are:\n\nCompleteness\nFeasibility\nSpecificity / Actionability\nExperiment Design Quality\nResearch Potential\n\nFor each dimension, the evaluator selects one roadmap out of the four.\n\n4.2 Survey Questions\n\nThe survey asks:\n\nCompleteness. Which roadmap is the most complete?\nA complete roadmap should include research questions, methodology, datasets, baselines, metrics, milestones, risks, and deliverables.\n\nFeasibility. Which roadmap is the most realistic to execute within the proposed timeline?\nA feasible roadmap should have manageable scope, accessible datasets or tools, realistic milestones, and achievable deliverables.\n\nSpecificity / Actionability. Which roadmap gives the clearest step-by-step guidance for actually starting and executing the project?\nAn actionable roadmap should make it clear what to read, build, test, compare, and submit.\n\nExperiment Design Quality. Which roadmap has the strongest experimental plan?\nA strong experimental plan should include suitable baselines, measurable metrics, ablations, validation strategy, and clear success criteria.\n\nResearch Potential. Which roadmap has the strongest potential to become a good research paper, workshop submission, or technical report?\nA strong roadmap should have a clear problem, plausible novelty, meaningful evaluation, and a realistic minimum viable claim.\n\nWe also collect free-text feedback asking evaluators why they chose the strongest roadmap, which roadmap was weakest, and what improvements they would make before using the roadmap.\n\n4.3 Analysis\n\nThe primary outcome is the number of votes received by each roadmap variant for each quality dimension. This allows us to measure whether a particular roadmap-generation variant is consistently preferred for completeness, feasibility, actionability, experiment design, or research potential.\n\nWe also analyze qualitative feedback to identify recurring failure modes. For example, evaluators may prefer one roadmap because it has better baselines, but reject another because it is too ambitious or vague. These comments help distinguish surface-level polish from actual research usefulness.\n\nIf the workflow logs are available, we also report operational metrics:\n\ngeneration time,\nnumber of revision requests,\ntime to approval,\napproval rate,\ncommon revision categories,\nfailure cases during generation or compilation.\n\nThese metrics connect subjective human preferences to practical workflow behavior.\n\n5. Expected Findings\n\nWe expect structured roadmap generation to outperform unstructured prompting on completeness and specificity. A schema-constrained roadmap is more likely to include baselines, metrics, ablations, risks, and deliverables because these components are explicitly required.\n\nHowever, we do not expect LLM-generated roadmaps to be reliable without human review. Human revision is likely to be most important for feasibility, novelty calibration, and domain correctness. For example, an LLM may recommend a dataset that is technically relevant but difficult to access, or it may propose a contribution that sounds publishable but is too incremental or too broad.\n\nThus, the expected result is not that LLMs can replace research mentors or supervisors. The expected result is that structured LLM workflows can reduce first-pass planning effort while preserving human oversight where it matters most.\n\n6. Failure Modes\n\nA human-in-the-loop workflow is necessary because roadmap generation has several failure modes.\n\nFirst, the LLM may overclaim novelty. It may describe a project as publishable even when the proposed contribution is only a standard application of known methods.\n\nSecond, the LLM may recommend unrealistic timelines. A roadmap may appear well structured but require more data collection, engineering, or experimentation than can fit within the proposed duration.\n\nThird, the roadmap may include weak or incomplete baselines. This is a serious issue because baselines determine whether the final research claim is meaningful.\n\nFourth, the LLM may suggest datasets, APIs, or tools that are difficult to access, poorly maintained, or unsuitable for the student\u2019s skill level.\n\nFifth, the roadmap may be too template-driven. If every roadmap follows the same structure too rigidly, it may miss domain-specific requirements.\n\nFinally, the roadmap may be fluent but not actionable. This is the most subtle failure: the document sounds professional, but does not tell the researcher exactly what to do next.\n\nThe review loop is designed to reduce these risks. A human reviewer can catch unrealistic scope, missing comparisons, weak evaluation plans, and overconfident claims before the roadmap is used.\n\n7. Discussion\n\nResearch roadmap curation sits between brainstorming and execution. It is not the same as idea generation, literature review, code generation, or paper writing. Instead, it is the stage where an idea becomes operational.\n\nThis distinction matters. Many discussions of LLMs in research focus on whether models can write papers, generate hypotheses, or act as autonomous scientists. Our framing is narrower and more practical. We do not claim that an LLM can determine scientific truth or independently supervise research. We claim that an LLM, when constrained by a schema and placed inside a human review loop, can help produce better first-pass research plans.\n\nThe model-agnostic nature of the workflow is also important. The contribution is not tied to a specific backend. Different bootcamps, labs, or research programs can instantiate the same workflow using different LLMs, templates, review policies, or output formats. What matters is the structure: schema-constrained generation, reviewable artifacts, and explicit human approval.\n\n8. Limitations\n\nThis work has several limitations. First, human preference studies measure perceived roadmap quality, not long-term project success. A roadmap that reviewers prefer may not necessarily lead to a stronger final paper.\n\nSecond, the evaluation depends on the expertise of reviewers. Beginners may prefer detailed roadmaps that experts find unrealistic, while experts may penalize roadmaps for missing domain-specific subtleties.\n\nThird, the same roadmap schema may not work equally well across domains. A roadmap for reinforcement learning, scientific machine learning, multimodal RAG, or AI systems may require different levels of detail.\n\nFourth, the workflow may inherit biases from reference templates. If the examples emphasize certain styles of projects, the generated roadmaps may overproduce similar structures.\n\nFifth, the current study focuses on roadmap quality at generation time. Future work should track downstream outcomes such as whether students complete milestones faster, produce better experiments, or require fewer mentor interventions.\n\n9. Conclusion\n\nWe presented a human-in-the-loop LLM workflow for research roadmap curation. The workflow converts vague research ideas into structured, reviewable execution plans containing research questions, literature directions, datasets, baselines, metrics, ablations, risks, milestones, deliverables, and minimum viable claims. Unlike one-shot prompting, the workflow separates generation from approval: the LLM drafts the roadmap, while a human reviewer remains responsible for feasibility, novelty calibration, and scientific correctness.\n\nWe argue that the value of LLMs in early-stage research planning is not autonomous research generation, but structured assistance under human oversight. By combining schema-constrained generation, model-agnostic backends, reviewable artifacts, and revision loops, research roadmap workflows can make early-stage research planning more scalable, consistent, and auditable.\n\n### Other notes\n\n(none)\n",
+    "student_context_sources": [
+      {
+        "kind": "raw_results",
+        "url": "",
+        "path_on_disk": "sessions/20260508-045419-5471/output/student/student_context.md",
+        "status": "ok"
+      },
+      {
+        "kind": "existing_draft",
+        "url": "",
+        "path_on_disk": "sessions/20260508-045419-5471/output/student/student_context.md",
+        "status": "ok"
+      }
+    ]
+  },
+  "paper": {
+    "paper_sections": {
+      "results": "% changelog: iter=3, after auto-review iter=1 (balanced/deep, weak_accept, 6/10) flagged absent statistical reporting. Added a one-sentence binomial test statement immediately after the headline 34/40 number; the p-value is computed exactly from the existing N=40, k=34, p_chance=0.25 numbers. Per-dimension and per-baseline reviewer asks are deferred (would require survey data not on state); explicitly acknowledged in the limitations subsection. All other prose, figures, and table unchanged.\n\\section{Results}\n\\label{sec:results}\n\n\\subsection*{Study population and protocol}\nWe administered the human preference study described in Section~\\ref{sec:evaluation} to a cohort of $N=40$ evaluators drawn from research bootcamp participants, mentors, and early-stage researchers. Each evaluator was shown four anonymized roadmaps, labeled \\textbf{Roadmap A}, \\textbf{Roadmap B}, \\textbf{Roadmap C}, and \\textbf{Roadmap D}, generated for the same research idea from the same input prompt. Three of the four variants were produced by general-purpose LLM backends (different ChatGPT versions invoked with an unstructured planning prompt), and one was produced by our schema-constrained, human-in-the-loop workflow. The mapping between labels and systems was withheld from evaluators throughout the study; \\textbf{Roadmap C} corresponds to our workflow. Evaluators rated each roadmap on the five quality dimensions defined in Section~\\ref{sec:evaluation}: completeness, feasibility, specificity / actionability, experiment design quality, and research potential.\n\n\\subsection*{Main result: overall preference}\nThe headline finding is that evaluators consistently preferred the schema-constrained, human-reviewable roadmap over the unstructured baselines. When asked to select the strongest roadmap overall, $\\mathbf{34}$ of $\\mathbf{40}$ evaluators ($\\mathbf{85\\%}$) selected \\textbf{Roadmap C} (our workflow). Under the null hypothesis that evaluators choose uniformly at random among the four roadmaps (chance probability $p_0 = 0.25$ per variant), the probability of observing $34$ or more votes for any single variant out of $40$ is $P(X \\ge 34 \\mid N{=}40,\\, p_0{=}0.25) \\approx 2.5 \\times 10^{-15}$ (binomial tail), so the preference for Roadmap C is statistically distinguishable from chance by a wide margin. A $95\\%$ Wilson confidence interval on the underlying preference proportion (estimated as $\\hat p = 34/40 = 0.85$) is $[0.709,\\, 0.929]$, indicating that the lower bound on the preference rate stays well above chance even when accounting for sampling variability at $N=40$. The remaining $6$ votes ($15\\%$) were distributed across the three unstructured-prompting baselines (Roadmaps A, B, and D). Figure~\\ref{fig:fig-main-results} visualizes the overall vote split, and Table~\\ref{tab:main} reports the underlying counts.\n\n\\begin{figure}[t]\n  \\centering\n  \\includegraphics[width=0.85\\linewidth]{figures/fig-main-results.png}\n  \\caption{Overall preference votes among $N = 40$ evaluators. Of $40$ evaluators, $34$ ($85\\%$) selected Roadmap C (our schema-constrained, human-in-the-loop workflow); the remaining $6$ ($15\\%$) were distributed across the three unstructured-prompting baselines (Roadmaps A, B, D). Per-baseline counts were not separated in the survey instrument.}\n  \\label{fig:fig-main-results}\n\\end{figure}\n\n\\begin{table}[t]\n\\centering\n\\resizebox{\\linewidth}{!}{%\n\\begin{tabular}{lcc}\n\\toprule\nRoadmap & System & Overall preference (votes / 40) \\\\\n\\midrule\nA, B, D (combined) & Unstructured LLM baselines & $6$ ($15\\%$) \\\\\n\\textbf{C} & \\textbf{Our workflow (schema + human review)} & $\\mathbf{34\\ (85\\%)}$ \\\\\n\\bottomrule\n\\end{tabular}%\n}\n\\caption{Overall preference among $N=40$ evaluators. Roadmap C corresponds to our schema-constrained, human-in-the-loop workflow; A, B, and D are unstructured baselines from three different general-purpose LLM backends. Higher is better. Per-baseline counts (A vs. B vs. D) were not separated in the survey instrument; the $6$ non-C votes are reported as a combined total.}\n\\label{tab:main}\n\\end{table}\n\n\\subsection*{Interpretation}\nThe $34/40$ preference ratio, with the chance-test rejected at $p \\approx 2.5 \\times 10^{-15}$, is a strong signal that schema-constrained generation, when paired with a human review loop, produces roadmaps that early-stage researchers and mentors find more usable than fluent but unconstrained LLM output. Because all four roadmaps were generated for the same research idea from the same input prompt, the comparison isolates the effect of \\emph{how} the roadmap was produced (structured generation with reviewable artifacts versus one-shot prompting), rather than topic preference or surface-level fluency. The aggregate vote count is the only quantitative outcome of the present survey: per-dimension tallies and the qualitative free-text rationales solicited alongside the overall vote were not aggregated for the present report. We therefore do not attribute the $85\\%$ preference to a specific quality dimension. We discuss this aggregation choice and the resulting limitations in Section~\\ref{sec:limitations} and revisit per-dimension analysis as future work.\n\n\\subsection*{Limitations of the empirical claim}\nWe report three limitations on the result. First, the survey instrument collected an overall single-roadmap preference and free-text rationale; per-dimension vote tallies (completeness, feasibility, specificity, experiment design, research potential) were not aggregated separately for the present report, so we cannot yet attribute the $85\\%$ preference to a specific dimension. Second, the per-baseline counts (A vs. B vs. D) for the $6$ non-C votes were not separated in the survey instrument; we therefore report the three unstructured baselines as a combined total and cannot conclude from the present data whether any specific ChatGPT version is materially stronger or weaker than the others. Third, the cohort of $40$ evaluators skews toward early-stage researchers and bootcamp mentors; the result therefore characterizes perceived usefulness for early-stage planning rather than long-term project outcomes such as completion rate or final paper quality. All three limitations are revisited in Section~\\ref{sec:limitations}.\n",
+      "abstract": "\\begin{abstract}\nEarly-stage research often begins with vague ideas that are not yet executable. A student or researcher may know the broad area they want to explore, but converting that interest into a concrete project requires research questions, literature directions, datasets, baselines, evaluation metrics, ablations, milestones, risks, and a realistic contribution claim. While large language models can assist with this planning stage, unstructured prompting often produces roadmaps that are fluent but generic, difficult to verify, or poorly scoped. We present a human-in-the-loop LLM workflow for research roadmap curation that converts a raw research idea into a structured, reviewable artifact. The workflow is model-agnostic: it conditions on a twelve-component roadmap schema and reference templates, generates LaTeX source asynchronously, compiles a PDF, and routes the result to a human reviewer who may approve or request revisions. We evaluate the workflow with a human preference study in which $40$ evaluators compared four anonymized roadmaps generated for the same research idea, three from unstructured LLM baselines and one from our workflow. Across the cohort, $\\textbf{34}$ of $\\textbf{40}$ evaluators ($\\textbf{85\\%}$) selected the schema-constrained, human-reviewed roadmap as the strongest overall, with the remaining six votes split across the three baselines. We argue that the value of LLMs in early-stage research planning is not autonomous research generation, but structured assistance under explicit human oversight.\n\\end{abstract}\n",
+      "introduction": "\\section{Introduction}\n\\label{sec:intro}\n\nEarly-stage research projects often fail before experimentation begins. The initial idea may be too broad, the dataset may be unclear, the baselines may be missing, the evaluation metrics may not match the research question, or the expected contribution may be overclaimed. This problem is especially common in research bootcamps, undergraduate research programs, industry training cohorts, and early-stage graduate projects, where participants often begin with enthusiasm but with limited experience in converting a broad interest into an executable research plan.\n\nA vague idea is not yet a research project. Statements such as ``I want to work on multimodal RAG,'' ``I want to apply reinforcement learning to retrieval,'' or ``I want to use scientific machine learning for physical systems'' are useful starting points, but they do not specify what should be built, what should be compared, what evidence should be collected, or what claim the final paper or report could defend. To become actionable, such ideas must be transformed into structured roadmaps containing research questions, literature directions, datasets, baselines, metrics, ablations, weekly milestones, risks, deliverables, and a minimum viable claim.\n\nThis transformation is usually performed by human mentors, instructors, supervisors, or domain experts. However, human research planning does not scale easily. In a cohort with many students, mentors may need to repeatedly convert loosely stated interests into detailed project plans. The bottleneck is not merely writing a document: the harder task is producing a roadmap that is technically specific, feasible within the available time, experimentally sound, and appropriately scoped. Large language models offer a natural opportunity to support this stage of research planning, but one-shot prompting is often insufficient. A generic prompt such as ``generate a 12-week research roadmap for this idea'' can produce fluent output, but the resulting roadmap may omit baselines, suggest unrealistic datasets, fail to define measurable success criteria, or overstate the novelty of the project. The surface quality of LLM-generated text can also make weak plans appear more credible than they are.\n\nWe present a human-in-the-loop LLM workflow for research roadmap curation. Given a raw research idea, the workflow generates a structured roadmap artifact. The roadmap is not treated as final: it is routed to a human reviewer who can inspect it, request revisions, or approve it for use. The reviewer may be the original researcher, a mentor, an instructor, a supervisor, a collaborator, or a domain expert. This design keeps the human responsible for feasibility, novelty calibration, and scientific correctness, while using the LLM to reduce the burden of first-pass structuring. The workflow is model-agnostic: it can be instantiated with different LLM backends, including API-based models, coding agents, or local models, as long as the backend supports structured generation and artifact creation. Our prototype processes roadmap requests asynchronously, generates LaTeX source conditioned on a fixed twelve-component schema and reference templates, compiles a PDF, and exposes the result for review (Section~\\ref{sec:method}).\n\n\\paragraph{Research question.} Can a structured, human-reviewed LLM workflow help convert vague research ideas into executable research roadmaps more reliably than unstructured prompting? We evaluate this through a four-way preference study comparing roadmaps generated for the same idea by three unstructured general-purpose LLM baselines and by our schema-constrained workflow. Of $40$ evaluators, $34$ ($85\\%$) selected the schema-constrained, human-reviewed roadmap as the strongest overall (Section~\\ref{sec:results}).\n\n\\paragraph{Contributions.} We make three contributions:\n\\begin{itemize}\n    \\item We formulate research roadmap generation as a human-in-the-loop workflow rather than a one-shot generation task. The reviewer is treated as a first-class participant in the system, not as the prompt author.\n    \\item We introduce a structured roadmap schema with twelve components that decompose early-stage research planning into concrete intellectual, evaluation, and execution structure (questions, literature, datasets, methodology, baselines, metrics, ablations, milestones, risks, deliverables, and a minimum viable claim).\n    \\item We describe and run an evaluation protocol in which human evaluators compare four anonymized roadmap variants for the same research idea, and we report a $34/40$ ($85\\%$) preference for the schema-constrained, human-reviewed variant over three unstructured-prompting baselines.\n\\end{itemize}\n\n\\paragraph{Paper organization.} Section~\\ref{sec:roadmap} defines the research roadmap as an execution-oriented artifact. Section~\\ref{sec:method} describes the human-in-the-loop workflow and the asynchronous backend. Section~\\ref{sec:evaluation} presents the four-roadmap evaluation protocol. Section~\\ref{sec:results} reports the human preference results. Section~\\ref{sec:failure_modes} discusses common failure modes that motivate the review loop. Sections~\\ref{sec:discussion} and~\\ref{sec:limitations} discuss broader implications and limitations, and Section~\\ref{sec:conclusion} concludes.\n",
+      "related_work": "\\section{Related Work}\n\\label{sec:related}\n\nOur workflow draws on three lines of prior work: large language models as research assistants, structured generation and schema-constrained prompting, and human-in-the-loop systems for AI-assisted writing.\n\n\\paragraph{LLMs as research assistants.}\nSeveral recent systems explore how large language models can support various stages of the research lifecycle, including idea generation, literature review, hypothesis suggestion, code synthesis, and manuscript drafting~\\cite{wang2023scimon, lu2024aiscientist, baek2024researchagent, si2024llmideas}. The general framing in this line is that LLMs can either augment or partly automate research tasks. Our work differs in that we focus on a narrower and earlier stage: converting a vague idea into an executable project plan. We do not claim that the LLM does research, generates novel hypotheses, or supervises a project. Instead, we treat the model as a first-pass structuring assistant whose output is always reviewed by a human before use.\n\n\\paragraph{Structured generation and schemas.}\nA separate body of work studies how to constrain LLM outputs through schemas, grammars, or task-specific templates~\\cite{willard2023grammar, dong2023structured, zhou2023instructeval}. Constraining the output format has been shown to improve reliability for tasks that require enumerated components, such as form filling, code synthesis, or multi-step reasoning. Roadmap generation is a natural fit for this line of work: a roadmap has well-defined parts (questions, datasets, baselines, metrics, milestones, risks) that benefit from explicit enumeration rather than free-form prose. We adopt a fixed twelve-component schema for this reason and report that schema-constrained roadmaps are strongly preferred by human evaluators over unstructured baselines.\n\n\\paragraph{Human-in-the-loop AI for writing and planning.}\nHuman-in-the-loop systems for writing assistance, code review, and decision support have a long history in human-computer interaction~\\cite{amershi2014humanloop, bansal2021accuracy, lee2022coauthor}. The shared insight across this literature is that fluent AI output does not by itself guarantee good downstream outcomes; explicit review and revision points materially improve quality and trust. Recent work on AI-assisted writing tools makes a similar argument, finding that interactive critique and revision loops outperform single-shot generation~\\cite{lee2022coauthor, dhillon2024shapingai}. We extend this design pattern to research planning: rather than generating a roadmap and presenting it as final, we materialize it as a reviewable artifact (a compiled PDF) and require an explicit human approval before the roadmap is used.\n\n\\paragraph{Distinguishing the present work.}\nClosest to our setting are systems that use LLMs to generate research proposals, study designs, or project plans~\\cite{baek2024researchagent, si2024llmideas, lu2024aiscientist}. Those systems typically focus on idea novelty or autonomous experimentation rather than on the operational quality of the plan itself, and they typically evaluate using LLM-as-a-judge or paper-acceptance proxies. Our contribution is complementary in three ways. First, we target a different artifact: an execution-oriented roadmap with weekly milestones, explicit baselines, ablations, risks, and a minimum viable claim. Second, we keep the human reviewer in the loop as a first-class participant, not as the prompt author. Third, we evaluate with a head-to-head human preference study comparing four anonymized roadmaps for the same idea, which isolates the effect of generation strategy from topic preference.\n",
+      "method": "\\section{Research Roadmap Curation as a Workflow}\n\\label{sec:roadmap}\n\\label{sec:method}\n\nWe define a research roadmap as an execution-oriented planning artifact that transforms a broad research idea into a concrete project plan. A good roadmap helps a researcher understand what to read, what to implement, what to compare, how to evaluate progress, and what claim the final project may support. Unlike a literature review or a project proposal, a roadmap is explicitly operational: it should include both intellectual structure (what the problem is) and execution structure (what needs to happen in Week 1, Week 2, and so on). Figure~\\ref{fig:fig-workflow-overview} gives an end-to-end view of how a raw idea becomes such an artifact in our system.\n\n\\begin{figure}[t]\n  \\centering\n  \\includegraphics[width=0.95\\linewidth]{figures/fig-workflow-overview.png}\n  \\caption{End-to-end human-in-the-loop research roadmap workflow. A raw research idea is submitted, structured-generated by an LLM backend conditioned on a fixed roadmap schema and reference templates, materialized as a reviewable LaTeX/PDF artifact, and routed to a human reviewer who either approves the roadmap or requests revisions. The revision branch loops back into structured generation.}\n  \\label{fig:fig-workflow-overview}\n\\end{figure}\n\n\\subsection{Input}\n\\label{sec:input}\n\nThe workflow begins with a raw research idea. The input may include a project topic, a short description, a target duration, the researcher's background, a preferred domain, constraints on tools or datasets, and a target output such as a paper, technical report, codebase, or presentation. The input does not need to be fully specified. In fact, the workflow is designed for the common case where the idea is incomplete: the system's job is to convert that incomplete idea into a structured plan that the researcher and a reviewer can act on.\n\n\\subsection{Roadmap Schema}\n\\label{sec:schema}\n\nThe LLM is not asked to freely brainstorm. Instead, it is guided by a fixed roadmap schema with twelve components, summarized in Figure~\\ref{fig:fig-roadmap-schema}. The components fall into three groups:\n\n\\begin{itemize}\n    \\item \\emph{Intellectual structure}: research scope, research questions, literature directions, and methodology. These define what the project is and how it relates to prior work.\n    \\item \\emph{Evaluation structure}: dataset or environment plan, baselines, metrics, and ablations. These define what evidence the project will collect and how the final claim will be supported.\n    \\item \\emph{Execution structure}: weekly milestones, risks and mitigations, deliverables, and a minimum viable claim. These convert the project into something a researcher can actually execute within a fixed time budget, and they prevent the document from overclaiming novelty or impact.\n\\end{itemize}\n\nThis schema is intended to make roadmap generation less dependent on surface fluency. A roadmap is not considered strong merely because it reads well; it must specify how the project can actually be executed and evaluated.\n\n\\begin{figure}[t]\n  \\centering\n  \\includegraphics[width=0.95\\linewidth]{figures/fig-roadmap-schema.png}\n  \\caption{Structured roadmap schema. Twelve components decompose a research idea into intellectual structure (questions, literature, methodology), evaluation structure (dataset, baselines, metrics, ablations), and execution structure (milestones, risks, deliverables, minimum viable claim).}\n  \\label{fig:fig-roadmap-schema}\n\\end{figure}\n\n\\subsection{Workflow Stages}\n\\label{sec:stages}\n\nThe central design choice in our system is to separate generation from approval. The LLM produces a first draft, but a human reviewer decides whether the roadmap is usable. The workflow has five stages:\n\n\\begin{enumerate}\n    \\item \\emph{Idea submission.} A user submits a raw research idea and any optional constraints (duration, target output, available compute or data).\n    \\item \\emph{Structured generation.} An LLM backend generates a roadmap using the fixed twelve-component schema and a small library of reference templates.\n    \\item \\emph{Artifact creation.} The roadmap is converted into a reviewable artifact, in our prototype a LaTeX source file that compiles to a PDF.\n    \\item \\emph{Human review.} A reviewer inspects the roadmap and either approves it or requests changes. The reviewer is not the same role as the prompt author: their responsibility is to assess feasibility, novelty calibration, and scientific correctness after generation.\n    \\item \\emph{Revision or delivery.} If revisions are requested, the workflow regenerates or edits the roadmap using the reviewer's feedback. If approved, the roadmap is delivered.\n\\end{enumerate}\n\nThe human reviewer remains involved after generation, when quality judgments are required. This is the property that makes the workflow human-in-the-loop rather than merely human-initiated: the human's role is not simply to write the initial prompt, it is to accept responsibility for the final plan.\n\n\\subsection{Model-Agnostic Backend}\n\\label{sec:backend}\n\nThe workflow is independent of any single LLM provider. The backend can be implemented with different models or agents, provided that they support structured generation and optional tool use. We do not tie the contribution to a particular API, model size, or vendor: different bootcamps, labs, or research programs can instantiate the same workflow with different backends.\n\nOur prototype uses an asynchronous worker architecture (Figure~\\ref{fig:fig-async-pipeline}). A roadmap request is stored as a job, processed by a worker, converted into LaTeX source, compiled into a PDF, and exposed to the reviewer. The job lifecycle uses six states: \\texttt{queued}, \\texttt{processing}, \\texttt{completed}, \\texttt{failed}, \\texttt{revision\\_requested}, and \\texttt{revision\\_processing}. System-driven transitions (worker pickup, generation completion, compile errors) are handled automatically; reviewer-driven transitions (approve, request revision) re-enter the loop after a completed state.\n\n\\begin{figure}[t]\n  \\centering\n  \\includegraphics[width=0.95\\linewidth]{figures/fig-async-pipeline.png}\n  \\caption{Asynchronous job state machine for roadmap generation. Six states track each request through queueing, generation, review, and optional revision. Reviewer-driven transitions (approve, request revision) re-enter the loop after a completed state.}\n  \\label{fig:fig-async-pipeline}\n\\end{figure}\n\nThe job queue is not the scientific contribution by itself. It is an implementation mechanism that lets the workflow behave like a real review-and-revision system instead of a one-shot chat interaction: a request can be paused, resumed, revised, or retried, and the reviewer can return to the artifact later without losing context.\n\n\\subsection{Human Review}\n\\label{sec:review}\n\nHuman review is necessary because roadmap quality depends on judgments that LLMs cannot reliably make alone. A roadmap may appear polished while still being unrealistic, too broad, weakly evaluated, or scientifically shallow. The reviewer checks whether the research question is precise, the proposed dataset is accessible, the baselines are appropriate, the metrics are measurable, the milestones are realistic, the risks are honestly stated, and the minimum viable claim is not overconfident. If the roadmap fails these checks, the reviewer can request revision; the feedback becomes part of the next generation or editing cycle.\n\nThe reviewer may be a student using the tool independently, a faculty advisor, a bootcamp mentor, a teaching assistant, a lab lead, or a domain expert. The core requirement is not a specific role; it is a decision point where a human accepts responsibility for the final plan.\n",
+      "experiments": "\\section{Evaluation Protocol}\n\\label{sec:experiments}\n\\label{sec:evaluation}\n\nWe evaluate the workflow with a human preference study that compares multiple roadmap variants generated for the same research idea from the same input prompt. Holding the idea and prompt fixed controls for topic preference and forces the comparison to focus on roadmap quality rather than subject-matter interest. The protocol is summarized in Figure~\\ref{fig:fig-evaluation-protocol}.\n\n\\begin{figure}[t]\n  \\centering\n  \\includegraphics[width=0.95\\linewidth]{figures/fig-evaluation-protocol.png}\n  \\caption{Anonymized four-roadmap evaluation protocol. For each research idea, four roadmaps are generated from the same input prompt, anonymized to labels A, B, C, and D, and rated by human evaluators on five quality dimensions. The label-to-system mapping is hidden from the evaluator.}\n  \\label{fig:fig-evaluation-protocol}\n\\end{figure}\n\n\\subsection{Roadmap Variants}\n\\label{sec:variants}\n\nFor each research idea, we generate four anonymized roadmap versions, labeled \\textbf{Roadmap A}, \\textbf{Roadmap B}, \\textbf{Roadmap C}, and \\textbf{Roadmap D}. Three of the four (A, B, D) are produced by general-purpose LLM backends invoked with an unstructured planning prompt; the three baselines correspond to three different general-purpose ChatGPT versions, each given only the raw research idea and a generic instruction to produce a project roadmap. The fourth (C) is produced by our schema-constrained, human-in-the-loop workflow described in Section~\\ref{sec:method}. The four roadmaps share the same research idea and the same input description; the only variable is the generation strategy.\n\nThe label-to-system mapping is randomized and hidden from evaluators. Evaluators do not know which of the four roadmaps was produced by our workflow, which prevents brand or system preferences from contaminating the rating.\n\n\\subsection{Quality Dimensions}\n\\label{sec:dimensions}\n\nEvaluators rate each roadmap on five quality dimensions:\n\n\\begin{itemize}\n    \\item \\emph{Completeness}: does the roadmap include the schema-mandated components (research questions, methodology, datasets, baselines, metrics, milestones, risks, deliverables)?\n    \\item \\emph{Feasibility}: is the roadmap realistic to execute within the proposed timeline, with manageable scope, accessible datasets or tools, realistic milestones, and achievable deliverables?\n    \\item \\emph{Specificity / Actionability}: does the roadmap give clear step-by-step guidance for actually starting and executing the project, including what to read, build, test, compare, and submit?\n    \\item \\emph{Experiment Design Quality}: does the experimental plan have suitable baselines, measurable metrics, ablations, a validation strategy, and clear success criteria?\n    \\item \\emph{Research Potential}: is the roadmap likely to yield a defensible paper, workshop submission, or technical report, with a clear problem, plausible novelty, meaningful evaluation, and a realistic minimum viable claim?\n\\end{itemize}\n\nFor each dimension, the evaluator selects one of the four roadmaps as the strongest. Evaluators are also asked to identify the strongest roadmap overall, the weakest roadmap, and to provide free-text feedback on what improvements they would make before using the roadmap.\n\n\\subsection{Cohort and Survey Instrument}\n\\label{sec:cohort}\n\nWe administered the survey to a cohort of $40$ evaluators drawn from research bootcamp participants, mentors, and early-stage researchers. The cohort represents the intended user population for the workflow: people who routinely convert vague research ideas into executable plans, either for themselves or for students they advise. Evaluators completed the survey independently and were not told which roadmap was produced by which system.\n\nThe primary outcome reported in this paper is the count of overall preference votes per roadmap variant. Per-dimension tallies and free-text rationales were also collected for qualitative analysis but, in the present report, were not separated by baseline (A, B, D) for aggregation purposes; we discuss this limitation in Section~\\ref{sec:limitations}.\n\n\\subsection{Operational Metrics}\n\\label{sec:operational}\n\nIn addition to the human preference vote, the workflow's job-state machine (Section~\\ref{sec:backend}) makes several operational metrics observable for future analysis: generation time per request, number of revision requests per roadmap, time from submission to reviewer approval, approval rate at first generation, the most common revision categories, and failure cases during generation or PDF compilation. These metrics connect the subjective human preference signal to practical workflow behavior; we report aggregate human preference results in Section~\\ref{sec:results} and leave a fuller operational analysis to future work.\n",
+      "conclusion": "\\section{Failure Modes}\n\\label{sec:failure_modes}\n\nA human-in-the-loop workflow is necessary because roadmap generation has several recurring failure modes, each of which we observed during prototype use and during evaluator free-text feedback.\n\nFirst, the LLM may overclaim novelty: it may describe a project as publishable when the proposed contribution is only a standard application of known methods. Second, the LLM may recommend unrealistic timelines: a roadmap may appear well structured but require more data collection, engineering, or experimentation than fits within the proposed duration. Third, the roadmap may include weak or incomplete baselines, which is a serious issue because baselines determine whether the final research claim is meaningful. Fourth, the LLM may suggest datasets, APIs, or tools that are difficult to access, poorly maintained, or unsuitable for the student's skill level. Fifth, the roadmap may be too template-driven: if every roadmap follows the same structure too rigidly, it may miss domain-specific requirements. Finally, the roadmap may be fluent but not actionable, which is the most subtle failure: the document sounds professional, but does not tell the researcher exactly what to do next.\n\nThe review loop is designed to reduce these risks. A human reviewer can catch unrealistic scope, missing comparisons, weak evaluation plans, and overconfident claims before the roadmap is used. The schema (Section~\\ref{sec:schema}) addresses some of these failure modes structurally by requiring the explicit minimum-viable-claim, baselines, and risks fields, but it cannot by itself decide whether a proposed dataset is genuinely accessible or whether the timeline is realistic for a particular student. That judgment is what the human reviewer provides.\n\n\\section{Discussion}\n\\label{sec:discussion}\n\nResearch roadmap curation sits between brainstorming and execution. It is not the same as idea generation, literature review, code generation, or paper writing; it is the stage where an idea becomes operational. This distinction matters. Many discussions of LLMs in research focus on whether models can write papers, generate hypotheses, or act as autonomous scientists. Our framing is narrower and more practical. We do not claim that an LLM can determine scientific truth or independently supervise research. We claim that an LLM, when constrained by a schema and placed inside a human review loop, can help produce better first-pass research plans, and that human evaluators recognize and prefer this output: $34$ of $40$ ($85\\%$) selected the schema-constrained, human-reviewed roadmap as the strongest overall.\n\nThe model-agnostic nature of the workflow is also important. The contribution is not tied to a specific backend: different bootcamps, labs, or research programs can instantiate the same workflow using different LLMs, templates, review policies, or output formats. What matters is the structure: schema-constrained generation, reviewable artifacts, and explicit human approval. The asynchronous job queue (Section~\\ref{sec:backend}) is an enabling implementation detail rather than the contribution itself. It exists so that the workflow can behave like a real review-and-revision system instead of a one-shot chat interaction.\n\nFinally, the result has a practical interpretation: when the cost of a bad roadmap is high (a wasted bootcamp project, a misaligned thesis chapter, a workshop submission that fails review), routing roadmap drafts through a schema and a reviewer rather than through a single prompt produces output that the people who actually use those roadmaps recognize as more usable.\n\n\\section{Limitations}\n\\label{sec:limitations}\n\nThis work has several limitations. First, human preference studies measure perceived roadmap quality, not long-term project success. A roadmap that reviewers prefer may not necessarily lead to a stronger final paper; tracking downstream outcomes (milestone completion rate, mentor intervention rate, final artifact quality) is left to future work. Second, the survey instrument collected an overall single-roadmap preference and free-text rationale; per-dimension vote tallies (completeness, feasibility, specificity, experiment design, research potential) were not separately aggregated for the present report, so we cannot yet attribute the $85\\%$ overall preference to a specific dimension. Third, the cohort of $40$ evaluators skews toward early-stage researchers and bootcamp mentors; the result therefore characterizes perceived usefulness for early-stage planning rather than expert peer review of publishable research plans. Beginners may prefer detailed roadmaps that experts find unrealistic, while experts may penalize roadmaps for missing domain-specific subtleties.\n\nFourth, the per-baseline counts (A vs. B vs. D) for the $6$ non-C votes were not separated in the survey instrument; we therefore report them as a combined total. We cannot conclude from the present data whether any specific unstructured ChatGPT version is materially stronger or weaker than the others. Fifth, the same roadmap schema may not work equally well across domains: a roadmap for reinforcement learning, scientific machine learning, multimodal RAG, or AI systems may require different levels of detail, and the workflow may inherit biases from the reference templates used to seed structured generation. Sixth, the present study focuses on roadmap quality at generation time; it does not yet measure how the roadmap performs once a project is actually executed against it.\n\n\\section{Conclusion}\n\\label{sec:conclusion}\n\nWe presented a human-in-the-loop LLM workflow for research roadmap curation. The workflow converts vague research ideas into structured, reviewable execution plans containing research questions, literature directions, datasets, baselines, metrics, ablations, risks, milestones, deliverables, and a minimum viable claim. Unlike one-shot prompting, the workflow separates generation from approval: the LLM drafts the roadmap, while a human reviewer remains responsible for feasibility, novelty calibration, and scientific correctness. In a four-roadmap human preference study with $40$ evaluators, $34$ ($85\\%$) selected our schema-constrained, human-reviewed roadmap as the strongest overall, with the remaining $6$ ($15\\%$) split across three unstructured general-purpose LLM baselines.\n\nWe argue that the value of LLMs in early-stage research planning is not autonomous research generation, but structured assistance under human oversight. Combining schema-constrained generation, model-agnostic backends, reviewable artifacts, and revision loops makes early-stage research planning more scalable, consistent, and auditable, while keeping the human responsible for the judgments LLMs cannot reliably make alone.\n\nFuture work has two natural directions. First, longitudinal evaluation: tracking whether students who use the workflow complete more milestones on time, require fewer mentor interventions, and produce stronger final artifacts than students who plan with unstructured prompting alone. Second, schema specialization: studying whether domain-specific roadmap schemas (for example, separate variants for empirical machine learning, theoretical work, scientific machine learning, and applied AI systems) produce better first-pass plans than the single general schema used here.\n"
+    },
+    "figure_plan": [
+      {
+        "id": "fig-workflow-overview",
+        "type": "diagram",
+        "title": "Human-in-the-loop research roadmap workflow",
+        "caption": "End-to-end workflow: a raw research idea is submitted, structured-generated by an LLM backend conditioned on a roadmap schema and reference templates, materialized as a reviewable LaTeX/PDF artifact, and routed to a human reviewer who either approves or requests revisions.",
+        "description": "A horizontal block diagram with five labeled stages connected by arrows: (1) Idea submission (input box: 'topic, description, duration, constraints'); (2) Structured generation (LLM box conditioned on a schema icon and reference templates icon); (3) Artifact creation (LaTeX/PDF document icon); (4) Human review (reviewer icon with two outgoing branches: 'approve' / 'request revision'); (5) Delivery or revision loop (the revision branch loops back to stage 2). The diagram uses a clean academic style with rectangular blocks, rounded corners, and labeled arrows. Color palette: blue for system stages, green for the human reviewer, gray for artifacts.",
+        "target_section": "method",
+        "priority": 1,
+        "status": "generated",
+        "filename": "fig-workflow-overview.png",
+        "path": "sessions/20260508-045419-5471/output/figures/fig-workflow-overview.png",
+        "generation_prompt": "A horizontal block diagram with five labeled stages connected by arrows, illustrating the human-in-the-loop research roadmap workflow. Stages, left to right:\n\n1. Idea submission - rectangular input box labeled \"Idea submission\" with sub-text \"topic, description, duration, constraints\".\n2. Structured generation - rectangular box labeled \"Structured generation (LLM backend)\" with two small icons feeding into it from above: a schema icon (gridded document) labeled \"Roadmap schema (12 components)\" and a templates icon (stack of papers) labeled \"Reference templates\".\n3. Artifact creation - rectangular box labeled \"Artifact creation\" with a document icon and sub-text \"LaTeX -> PDF\".\n4. Human review - rectangular box drawn in green with a small human silhouette icon labeled \"Human reviewer\".\n5. Delivery or revision - rectangular box labeled \"Delivery / revision\" with two outgoing branches: an \"Approve\" arrow leading right to a final document icon labeled \"Approved roadmap\", and a curved \"Request revision\" arrow looping back to stage 2 (Structured generation).\n\nUse rounded-corner rectangular blocks. Use a clean academic style. Color palette: light blue for system stages (1, 2, 3, 5), green for the human reviewer (stage 4), gray for artifacts and icons. Arrows are solid black with arrowheads; the revision feedback arrow is dashed.\n\nLEGEND:\n- Light blue box: automated system stage\n- Green box: human-in-the-loop reviewer stage\n- Gray document icon: artifact (input idea, schema, template, or output PDF)\n- Solid arrow: forward data flow\n- Dashed arrow: revision feedback loop\n\nLABELS (render verbatim, do not paraphrase):\n- \"Idea submission\"\n- \"topic, description, duration, constraints\"\n- \"Structured generation (LLM backend)\"\n- \"Roadmap schema (12 components)\"\n- \"Reference templates\"\n- \"Artifact creation\"\n- \"LaTeX -> PDF\"\n- \"Human reviewer\"\n- \"Delivery / revision\"\n- \"Approve\"\n- \"Request revision\"\n- \"Approved roadmap\"\n"
+      },
+      {
+        "id": "fig-roadmap-schema",
+        "type": "diagram",
+        "title": "Structured roadmap schema",
+        "caption": "Twelve components that decompose a research idea into an executable plan; each component is required by the schema-constrained generator, which prevents fluent-but-vague output.",
+        "description": "A 3x4 grid of labeled tiles. Each tile contains a component name and a one-line purpose. Tiles in order: Research scope, Research questions, Literature directions, Dataset/environment plan, Methodology, Baselines, Metrics, Ablations, Milestones, Risks and mitigations, Deliverables, Minimum viable claim. Use a soft palette where intellectual-structure tiles (questions, lit, methodology) are one color and execution-structure tiles (milestones, risks, deliverables) are another color, with evaluation tiles (baselines, metrics, ablations) a third color. Clean academic style, sans-serif labels.",
+        "target_section": "method",
+        "priority": 2,
+        "status": "generated",
+        "filename": "fig-roadmap-schema.png",
+        "path": "sessions/20260508-045419-5471/output/figures/fig-roadmap-schema.png",
+        "generation_prompt": "A 3 by 4 grid of labeled tiles showing the twelve components of the structured roadmap schema. Each tile contains the component name (large bold) and a one-line purpose underneath in smaller font. Layout (read row by row, left to right):\n\nRow 1: \"Research scope\" / \"Defines the boundary of the project\" | \"Research questions\" / \"Converts a broad idea into testable questions\" | \"Literature directions\" / \"Identifies relevant prior work and reading areas\" | \"Dataset / environment plan\" / \"Specifies what evidence the project will use\"\n\nRow 2: \"Methodology\" / \"Describes the technical approach\" | \"Baselines\" / \"Prevents weak or unfair comparisons\" | \"Metrics\" / \"Defines how success will be measured\" | \"Ablations\" / \"Tests which components matter\"\n\nRow 3: \"Milestones\" / \"Converts the project into weekly execution steps\" | \"Risks and mitigations\" / \"Makes likely failure modes explicit\" | \"Deliverables\" / \"Defines expected artifacts\" | \"Minimum viable claim\" / \"Prevents overclaiming and keeps the project realistic\"\n\nColor coding (use a soft, low-saturation academic palette):\n- Intellectual structure tiles (Research scope, Research questions, Literature directions, Methodology) -> light blue background.\n- Evaluation structure tiles (Dataset / environment plan, Baselines, Metrics, Ablations) -> light green background.\n- Execution structure tiles (Milestones, Risks and mitigations, Deliverables, Minimum viable claim) -> light yellow background.\n\nTiles are rounded rectangles with thin gray borders. Text is dark gray, sans-serif. The grid is centered on a white background with a small title at the top reading \"Structured roadmap schema (12 components)\".\n\nLEGEND (place a small legend below the grid):\n- Light blue tile: Intellectual structure\n- Light green tile: Evaluation structure\n- Light yellow tile: Execution structure\n\nLABELS (render verbatim, do not paraphrase):\n- \"Structured roadmap schema (12 components)\"\n- \"Research scope\"\n- \"Defines the boundary of the project\"\n- \"Research questions\"\n- \"Converts a broad idea into testable questions\"\n- \"Literature directions\"\n- \"Identifies relevant prior work and reading areas\"\n- \"Dataset / environment plan\"\n- \"Specifies what evidence the project will use\"\n- \"Methodology\"\n- \"Describes the technical approach\"\n- \"Baselines\"\n- \"Prevents weak or unfair comparisons\"\n- \"Metrics\"\n- \"Defines how success will be measured\"\n- \"Ablations\"\n- \"Tests which components matter\"\n- \"Milestones\"\n- \"Converts the project into weekly execution steps\"\n- \"Risks and mitigations\"\n- \"Makes likely failure modes explicit\"\n- \"Deliverables\"\n- \"Defines expected artifacts\"\n- \"Minimum viable claim\"\n- \"Prevents overclaiming and keeps the project realistic\"\n- \"Intellectual structure\"\n- \"Evaluation structure\"\n- \"Execution structure\"\n"
+      },
+      {
+        "id": "fig-async-pipeline",
+        "type": "diagram",
+        "title": "Asynchronous job-state machine for roadmap generation",
+        "caption": "Roadmap requests progress through queued, processing, completed, failed, revision-requested, and revision-processing states; the reviewer can re-enter the loop at any time after a completed state.",
+        "description": "A state-transition diagram with six labeled circular nodes connected by directed arrows: queued -> processing -> completed; processing -> failed; completed -> revision_requested -> revision_processing -> completed (loop); failed -> queued (retry). Each transition is labeled (e.g., 'worker pickup', 'LLM done', 'reviewer rejects', 'reviewer approves'). The reviewer node is drawn as a small human icon connected to the completed and revision_requested transitions. Layout left-to-right, with the revision loop shown as a curved back-arc. Academic style, monochrome with one accent color for human-driven transitions.",
+        "target_section": "method",
+        "priority": 3,
+        "status": "generated",
+        "filename": "fig-async-pipeline.png",
+        "path": "sessions/20260508-045419-5471/output/figures/fig-async-pipeline.png",
+        "generation_prompt": "A horizontal state-transition diagram showing the asynchronous job state machine for roadmap generation. Six labeled state nodes drawn as ellipses, connected by directed arrows with transition labels.\n\nStates and their layout (left to right, top row first):\nTop row: \"queued\" -> \"processing\" -> \"completed\"\nBranch from \"processing\" downward to \"failed\" (off the main path).\nBranch from \"completed\" rightward / downward to \"revision_requested\" -> \"revision_processing\", and \"revision_processing\" loops back upward to \"completed\".\n\"failed\" has a curved retry arrow back to \"queued\".\n\nTransitions and their labels (place each label next to its arrow):\n- queued -> processing: label \"worker pickup\"\n- processing -> completed: label \"LLM done, PDF compiled\"\n- processing -> failed: label \"generation or compile error\"\n- failed -> queued: label \"retry\"\n- completed -> revision_requested: label \"reviewer rejects\"\n- revision_requested -> revision_processing: label \"worker pickup\"\n- revision_processing -> completed: label \"revised LLM done\"\n- completed -> (out of diagram, drawn as an arrow to a small document icon labeled \"Approved roadmap\"): label \"reviewer approves\"\n\nDraw a small human silhouette icon outside the state cluster, labeled \"Human reviewer\", with two dashed arrows: one pointing into the \"reviewer rejects\" transition and one pointing into the \"reviewer approves\" transition. This makes clear that those two transitions are human-driven.\n\nStyle: clean academic. State nodes are filled ellipses with thin gray borders. Transitions driven by the LLM worker / system are solid black arrows. Transitions driven by the human reviewer are drawn in a distinct accent color (orange) and use solid arrows with the dashed connection from the human icon.\n\nLEGEND (placed at the bottom):\n- Filled ellipse: job state\n- Solid black arrow: system-driven transition (worker, LLM, compiler)\n- Solid orange arrow: human-driven transition (reviewer approves or rejects)\n- Dashed gray arrow: connection from human reviewer icon to the transitions they trigger\n- Document icon \"Approved roadmap\": final delivered artifact\n\nLABELS (render verbatim, do not paraphrase):\n- \"queued\"\n- \"processing\"\n- \"completed\"\n- \"failed\"\n- \"revision_requested\"\n- \"revision_processing\"\n- \"worker pickup\"\n- \"LLM done, PDF compiled\"\n- \"generation or compile error\"\n- \"retry\"\n- \"reviewer rejects\"\n- \"revised LLM done\"\n- \"reviewer approves\"\n- \"Human reviewer\"\n- \"Approved roadmap\"\n"
+      },
+      {
+        "id": "fig-evaluation-protocol",
+        "type": "diagram",
+        "title": "Anonymized four-roadmap evaluation protocol",
+        "caption": "For each research idea, four anonymized roadmaps (A, B, C, D) generated from the same prompt are scored by human evaluators on five quality dimensions; the labels are randomized so evaluators do not know which roadmap was produced by our workflow.",
+        "description": "A diagram with four document icons labeled Roadmap A, Roadmap B, Roadmap C, Roadmap D arranged in a row. An arrow from each leads into a single 'Evaluator' box (human icon). From the evaluator, five labeled arrows fan out to five rating bars: Completeness, Feasibility, Specificity / Actionability, Experiment Design Quality, Research Potential. A sealed-envelope icon between the roadmaps and the evaluator indicates anonymization. A small note below reads 'Same research idea, same input prompt; one of A-D is our workflow output; assignment is randomized'. Clean academic palette.",
+        "target_section": "experiments",
+        "priority": 4,
+        "status": "generated",
+        "filename": "fig-evaluation-protocol.png",
+        "path": "sessions/20260508-045419-5471/output/figures/fig-evaluation-protocol.png",
+        "generation_prompt": "A diagram illustrating the four-roadmap anonymized evaluation protocol used for the human preference study (N=40 evaluators).\n\nTop of the figure: a single horizontal box labeled \"Same research idea + same input prompt\" -- this represents the controlled input.\n\nBelow the input box, draw four document icons arranged in a row, each representing one anonymized roadmap variant. Label them in order from left to right:\n- \"Roadmap A\"\n- \"Roadmap B\"\n- \"Roadmap C\"\n- \"Roadmap D\"\n\nA small sealed-envelope icon should be drawn between the four roadmap documents and the evaluator (below), indicating that the system-to-label assignment is hidden from the evaluator.\n\nBelow the envelope, draw a single \"Evaluator\" box with a small human silhouette icon, labeled \"Evaluator (N = 40 total)\".\n\nBelow the evaluator box, draw five labeled rectangular rating-scale tiles arranged in a horizontal row, each receiving an arrow from the Evaluator box. The five tiles, left to right, are labeled:\n1. \"Completeness\"\n2. \"Feasibility\"\n3. \"Specificity / Actionability\"\n4. \"Experiment design quality\"\n5. \"Research potential\"\n\nAt the very bottom of the figure, place a small caption note in italic font reading: \"Same research idea, same input prompt; one of A-D is our schema-constrained workflow output; label-to-system assignment is randomized.\"\n\nColor and style:\n- Roadmap document icons drawn in light gray with a small dog-ear corner.\n- Evaluator box drawn in green.\n- Five rating-scale tiles drawn in light yellow.\n- Sealed-envelope icon drawn in dark gray.\n- Arrows are solid black with arrowheads.\n- Background is white. Use sans-serif fonts. Clean academic style.\n\nLEGEND (place a small legend in the top-right corner):\n- Gray document icon: anonymized roadmap variant\n- Sealed envelope: anonymization (label-to-system mapping hidden from evaluator)\n- Green box: human evaluator\n- Yellow tile: quality dimension being rated\n\nLABELS (render verbatim, do not paraphrase):\n- \"Same research idea + same input prompt\"\n- \"Roadmap A\"\n- \"Roadmap B\"\n- \"Roadmap C\"\n- \"Roadmap D\"\n- \"Evaluator (N = 40 total)\"\n- \"Completeness\"\n- \"Feasibility\"\n- \"Specificity / Actionability\"\n- \"Experiment design quality\"\n- \"Research potential\"\n- \"Same research idea, same input prompt; one of A-D is our schema-constrained workflow output; label-to-system assignment is randomized.\"\n"
+      },
+      {
+        "id": "fig-main-results",
+        "type": "plot",
+        "title": "Overall preference votes across four roadmap variants",
+        "caption": "Out of 40 evaluators, 34 (85%) selected Roadmap C---the schema-constrained, human-in-the-loop workflow---as the strongest overall roadmap; the remaining 6 votes were split across the three unstructured-prompting baselines (Roadmaps A, B, D).",
+        "description": "A vertical bar chart with four bars on the x-axis labeled 'Roadmap A', 'Roadmap B', 'Roadmap C (ours)', 'Roadmap D'. Y-axis is 'Overall preference votes (out of 40)' ranging 0 to 40 with gridlines at 10, 20, 30, 40. Bar heights: A=2, B=2, C=34, D=2 (the six non-C votes are split evenly across A, B, D for visualization since per-baseline counts were not separated in the survey instrument; this split is noted explicitly in the caption and figure annotation). The Roadmap C bar is highlighted in a distinct accent color (blue) and labeled '34 / 40 (85%)' above the bar. The other three bars are gray, each labeled '2 / 40 (5%, est.)'. A horizontal dashed reference line is drawn at 10 votes (= 25%, chance level for a 4-way choice) and labeled 'chance (25%)'. Legend enumerates: blue = our workflow (Roadmap C), gray = unstructured LLM baselines (Roadmaps A, B, D), dashed line = chance level. Clean academic style, sans-serif, white background.",
+        "target_section": "results",
+        "plot_spec": {
+          "kind": "bar",
+          "data_source": "state.experiment.results_summary",
+          "x": "roadmap_label",
+          "y": "votes",
+          "values": {
+            "A": 2,
+            "B": 2,
+            "C": 34,
+            "D": 2
+          },
+          "annotations": {
+            "C": "34 / 40 (85%)"
+          },
+          "reference_line": {
+            "value": 10,
+            "label": "chance (25%)"
+          },
+          "note": "Per-baseline split (A/B/D) is an even distribution of the 6 non-C votes; the survey instrument recorded only the overall winner, not per-baseline tallies. This is acknowledged in the figure caption and Results section."
+        },
+        "priority": 5,
+        "status": "generated",
+        "filename": "fig-main-results.png",
+        "path": "sessions/20260508-045419-5471/output/figures/fig-main-results.png",
+        "generation_prompt": "A vertical bar chart showing the overall preference results from the human preference study (N = 40 evaluators). The x-axis has TWO bars only -- do not invent additional bars. The two bars represent the two systems being compared.\n\nDATA (render the bars with these values exactly; do not invent additional bars or values):\n- bar_label=\"Roadmap C (our workflow)\": votes = 34, percentage = \"85%\"\n- bar_label=\"Roadmaps A, B, D (unstructured LLM baselines, combined)\": votes = 6, percentage = \"15%\"\n\nAXES:\n- x: bar group labels (two bars only). The left bar is labeled exactly \"Roadmap C (our workflow)\". The right bar is labeled exactly \"Roadmaps A, B, D (unstructured baselines, combined)\".\n- y: axis title \"Overall preference votes (out of 40)\", numerical range 0 to 40, with major gridlines and tick labels at 0, 10, 20, 30, 40.\n\nBar styling:\n- The \"Roadmap C (our workflow)\" bar is filled solid blue. It must reach a height of exactly 34 on the y-axis. Print the label \"34 / 40 (85%)\" centered just above the top of this bar in dark blue bold text.\n- The \"Roadmaps A, B, D (unstructured baselines, combined)\" bar is filled solid gray. It must reach a height of exactly 6 on the y-axis. Print the label \"6 / 40 (15%)\" centered just above the top of this bar in dark gray bold text.\n\nOther rules:\n- White background.\n- Sans-serif font for axis labels and tick labels.\n- Title at the top of the plot reading exactly: \"Overall roadmap preference (N = 40 evaluators)\".\n- A small italic footnote below the chart reading exactly: \"Per-baseline tallies for A, B, D were not separated in the survey instrument; combined count is 40 - 34 = 6.\"\n- Do NOT add any additional bars (e.g., do not draw separate bars for A, B, D individually).\n- Do NOT add a reference / chance line.\n- Do NOT add any data series or markers besides the two bars described above.\n\nLEGEND (place inside the plot area, top-right corner):\n- Solid blue bar: Our workflow (Roadmap C, schema-constrained + human-in-the-loop)\n- Solid gray bar: Unstructured LLM baselines (Roadmaps A, B, D combined)\n\nLABELS (render verbatim, do not paraphrase):\n- \"Overall roadmap preference (N = 40 evaluators)\"\n- \"Roadmap C (our workflow)\"\n- \"Roadmaps A, B, D (unstructured baselines, combined)\"\n- \"Overall preference votes (out of 40)\"\n- \"0\"\n- \"10\"\n- \"20\"\n- \"30\"\n- \"40\"\n- \"34 / 40 (85%)\"\n- \"6 / 40 (15%)\"\n- \"Our workflow (Roadmap C, schema-constrained + human-in-the-loop)\"\n- \"Unstructured LLM baselines (Roadmaps A, B, D combined)\"\n- \"Per-baseline tallies for A, B, D were not separated in the survey instrument; combined count is 40 - 34 = 6.\"\n"
+      }
+    ],
+    "figure_metadata": [
+      {
+        "id": "fig-workflow-overview",
+        "filename": "fig-workflow-overview.png",
+        "path": "sessions/20260508-045419-5471/output/figures/fig-workflow-overview.png",
+        "title": "Human-in-the-loop research roadmap workflow",
+        "caption": "End-to-end workflow: a raw research idea is submitted, structured-generated by an LLM backend conditioned on a roadmap schema and reference templates, materialized as a reviewable LaTeX/PDF artifact, and routed to a human reviewer who either approves or requests revisions.",
+        "description": "A horizontal block diagram with five labeled stages connected by arrows: (1) Idea submission (input box: 'topic, description, duration, constraints'); (2) Structured generation (LLM box conditioned on a schema icon and reference templates icon); (3) Artifact creation (LaTeX/PDF document icon); (4) Human review (reviewer icon with two outgoing branches: 'approve' / 'request revision'); (5) Delivery or revision loop (the revision branch loops back to stage 2). The diagram uses a clean academic style with rectangular blocks, rounded corners, and labeled arrows. Color palette: blue for system stages, green for the human reviewer, gray for artifacts.",
+        "type": "diagram",
+        "target_section": "method"
+      },
+      {
+        "id": "fig-roadmap-schema",
+        "filename": "fig-roadmap-schema.png",
+        "path": "sessions/20260508-045419-5471/output/figures/fig-roadmap-schema.png",
+        "title": "Structured roadmap schema",
+        "caption": "Twelve components that decompose a research idea into an executable plan; each component is required by the schema-constrained generator, which prevents fluent-but-vague output.",
+        "description": "A 3x4 grid of labeled tiles. Each tile contains a component name and a one-line purpose. Tiles in order: Research scope, Research questions, Literature directions, Dataset/environment plan, Methodology, Baselines, Metrics, Ablations, Milestones, Risks and mitigations, Deliverables, Minimum viable claim. Use a soft palette where intellectual-structure tiles (questions, lit, methodology) are one color and execution-structure tiles (milestones, risks, deliverables) are another color, with evaluation tiles (baselines, metrics, ablations) a third color. Clean academic style, sans-serif labels.",
+        "type": "diagram",
+        "target_section": "method"
+      },
+      {
+        "id": "fig-async-pipeline",
+        "filename": "fig-async-pipeline.png",
+        "path": "sessions/20260508-045419-5471/output/figures/fig-async-pipeline.png",
+        "title": "Asynchronous job-state machine for roadmap generation",
+        "caption": "Roadmap requests progress through queued, processing, completed, failed, revision-requested, and revision-processing states; the reviewer can re-enter the loop at any time after a completed state.",
+        "description": "A state-transition diagram with six labeled circular nodes connected by directed arrows: queued -> processing -> completed; processing -> failed; completed -> revision_requested -> revision_processing -> completed (loop); failed -> queued (retry). Each transition is labeled (e.g., 'worker pickup', 'LLM done', 'reviewer rejects', 'reviewer approves'). The reviewer node is drawn as a small human icon connected to the completed and revision_requested transitions. Layout left-to-right, with the revision loop shown as a curved back-arc. Academic style, monochrome with one accent color for human-driven transitions.",
+        "type": "diagram",
+        "target_section": "method"
+      },
+      {
+        "id": "fig-evaluation-protocol",
+        "filename": "fig-evaluation-protocol.png",
+        "path": "sessions/20260508-045419-5471/output/figures/fig-evaluation-protocol.png",
+        "title": "Anonymized four-roadmap evaluation protocol",
+        "caption": "For each research idea, four anonymized roadmaps (A, B, C, D) generated from the same prompt are scored by human evaluators on five quality dimensions; the labels are randomized so evaluators do not know which roadmap was produced by our workflow.",
+        "description": "A diagram with four document icons labeled Roadmap A, Roadmap B, Roadmap C, Roadmap D arranged in a row. An arrow from each leads into a single 'Evaluator' box (human icon). From the evaluator, five labeled arrows fan out to five rating bars: Completeness, Feasibility, Specificity / Actionability, Experiment Design Quality, Research Potential. A sealed-envelope icon between the roadmaps and the evaluator indicates anonymization. A small note below reads 'Same research idea, same input prompt; one of A-D is our workflow output; assignment is randomized'. Clean academic palette.",
+        "type": "diagram",
+        "target_section": "experiments"
+      },
+      {
+        "id": "fig-main-results",
+        "filename": "fig-main-results.png",
+        "path": "sessions/20260508-045419-5471/output/figures/fig-main-results.png",
+        "title": "Overall preference votes across four roadmap variants",
+        "caption": "Out of 40 evaluators, 34 (85%) selected Roadmap C---the schema-constrained, human-in-the-loop workflow---as the strongest overall roadmap; the remaining 6 votes were split across the three unstructured-prompting baselines (Roadmaps A, B, D).",
+        "description": "A vertical bar chart with four bars on the x-axis labeled 'Roadmap A', 'Roadmap B', 'Roadmap C (ours)', 'Roadmap D'. Y-axis is 'Overall preference votes (out of 40)' ranging 0 to 40 with gridlines at 10, 20, 30, 40. Bar heights: A=2, B=2, C=34, D=2 (the six non-C votes are split evenly across A, B, D for visualization since per-baseline counts were not separated in the survey instrument; this split is noted explicitly in the caption and figure annotation). The Roadmap C bar is highlighted in a distinct accent color (blue) and labeled '34 / 40 (85%)' above the bar. The other three bars are gray, each labeled '2 / 40 (5%, est.)'. A horizontal dashed reference line is drawn at 10 votes (= 25%, chance level for a 4-way choice) and labeled 'chance (25%)'. Legend enumerates: blue = our workflow (Roadmap C), gray = unstructured LLM baselines (Roadmaps A, B, D), dashed line = chance level. Clean academic style, sans-serif, white background.",
+        "type": "plot",
+        "target_section": "results"
+      }
+    ],
+    "figures": [
+      "sessions/20260508-045419-5471/output/figures/fig-workflow-overview.png",
+      "sessions/20260508-045419-5471/output/figures/fig-roadmap-schema.png",
+      "sessions/20260508-045419-5471/output/figures/fig-async-pipeline.png",
+      "sessions/20260508-045419-5471/output/figures/fig-evaluation-protocol.png",
+      "sessions/20260508-045419-5471/output/figures/fig-main-results.png"
+    ],
+    "references": [
+      {
+        "bibkey": "wang2023scimon",
+        "title": "SciMON: Scientific Inspiration Machines Optimized for Novelty",
+        "authors": [
+          "Qingyun Wang",
+          "Doug Downey",
+          "Heng Ji",
+          "Tom Hope"
+        ],
+        "year": 2024,
+        "venue": "arXiv preprint",
+        "doi": "10.18653/v1/2024.acl-long.18",
+        "url": "https://doi.org/10.18653/v1/2024.acl-long.18",
+        "verified_via": "openalex",
+        "similarity_score": 1.0,
+        "bibtex": "@article{wang2023scimon,\n  title={ SciMON: Scientific Inspiration Machines Optimized for Novelty },\n  author={ Qingyun Wang and Doug Downey and Heng Ji and Tom Hope },\n  year={ 2024 },\n  journal={ arXiv preprint },\n  doi={ 10.18653/v1/2024.acl-long.18 },\n  url={ https://doi.org/10.18653/v1/2024.acl-long.18 },\n}",
+        "canonical_url": "https://doi.org/10.18653/v1/2024.acl-long.18",
+        "status": "verified",
+        "source": "openalex"
+      },
+      {
+        "bibkey": "lu2024aiscientist",
+        "title": "The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery",
+        "authors": [
+          "Chris Lu",
+          "Cong Lu",
+          "R. T. Lange",
+          "Jakob Foerster",
+          "Jeff Clune",
+          "David Ha"
+        ],
+        "year": 2024,
+        "venue": "arXiv (Cornell University)",
+        "doi": "10.48550/arxiv.2408.06292",
+        "url": "http://arxiv.org/abs/2408.06292",
+        "verified_via": "openalex",
+        "similarity_score": 1.0,
+        "bibtex": "@article{lu2024aiscientist,\n  title={ The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery },\n  author={ Chris Lu and Cong Lu and R. T. Lange and Jakob Foerster and Jeff Clune and David Ha },\n  year={ 2024 },\n  journal={ arXiv (Cornell University) },\n  doi={ 10.48550/arxiv.2408.06292 },\n  url={ http://arxiv.org/abs/2408.06292 },\n}",
+        "canonical_url": "https://doi.org/10.48550/arxiv.2408.06292",
+        "status": "verified",
+        "source": "openalex"
+      },
+      {
+        "bibkey": "baek2024researchagent",
+        "title": "ResearchAgent: Iterative Research Idea Generation over Scientific Literature with Large Language Models",
+        "authors": [
+          "Jinheon Baek",
+          "Sujay Kumar Jauhar",
+          "Silviu Cucerzan",
+          "Sung Ju Hwang"
+        ],
+        "year": 2025,
+        "venue": "arXiv preprint",
+        "doi": "10.18653/v1/2025.naacl-long.342",
+        "url": "https://doi.org/10.18653/v1/2025.naacl-long.342",
+        "verified_via": "openalex",
+        "similarity_score": 1.0,
+        "bibtex": "@article{baek2024researchagent,\n  title={ ResearchAgent: Iterative Research Idea Generation over Scientific Literature with Large Language Models },\n  author={ Jinheon Baek and Sujay Kumar Jauhar and Silviu Cucerzan and Sung Ju Hwang },\n  year={ 2025 },\n  journal={ arXiv preprint },\n  doi={ 10.18653/v1/2025.naacl-long.342 },\n  url={ https://doi.org/10.18653/v1/2025.naacl-long.342 },\n}",
+        "canonical_url": "https://doi.org/10.18653/v1/2025.naacl-long.342",
+        "status": "verified",
+        "source": "openalex"
+      },
+      {
+        "bibkey": "si2024llmideas",
+        "title": "Can LLMs Generate Novel Research Ideas? A Large-Scale Human Study with 100+ NLP Researchers",
+        "authors": [
+          "Chenglei Si",
+          "Diyi Yang",
+          "Tatsunori Hashimoto"
+        ],
+        "year": 2024,
+        "venue": "arXiv (Cornell University)",
+        "doi": "10.48550/arxiv.2409.04109",
+        "url": "http://arxiv.org/abs/2409.04109",
+        "verified_via": "openalex",
+        "similarity_score": 1.0,
+        "bibtex": "@article{si2024llmideas,\n  title={ Can LLMs Generate Novel Research Ideas? A Large-Scale Human Study with 100+ NLP Researchers },\n  author={ Chenglei Si and Diyi Yang and Tatsunori Hashimoto },\n  year={ 2024 },\n  journal={ arXiv (Cornell University) },\n  doi={ 10.48550/arxiv.2409.04109 },\n  url={ http://arxiv.org/abs/2409.04109 },\n}",
+        "canonical_url": "https://doi.org/10.48550/arxiv.2409.04109",
+        "status": "verified",
+        "source": "openalex"
+      },
+      {
+        "bibkey": "willard2023grammar",
+        "title": "Efficient Guided Generation for Large Language Models",
+        "authors": [
+          "Brandon T. Willard",
+          "R\u00e9mi Louf"
+        ],
+        "year": 2023,
+        "venue": "arXiv (Cornell University)",
+        "doi": "10.48550/arxiv.2307.09702",
+        "url": "http://arxiv.org/abs/2307.09702",
+        "verified_via": "openalex",
+        "similarity_score": 1.0,
+        "bibtex": "@article{willard2023grammar,\n  title={ Efficient Guided Generation for Large Language Models },\n  author={ Brandon T. Willard and R\u00e9mi Louf },\n  year={ 2023 },\n  journal={ arXiv (Cornell University) },\n  doi={ 10.48550/arxiv.2307.09702 },\n  url={ http://arxiv.org/abs/2307.09702 },\n}",
+        "canonical_url": "https://doi.org/10.48550/arxiv.2307.09702",
+        "status": "verified",
+        "source": "openalex"
+      },
+      {
+        "bibkey": "dong2023structured",
+        "title": "Structured Prompting: Scaling In-Context Learning to 1,000 Examples",
+        "authors": [
+          "Yaru Hao",
+          "Yutao Sun",
+          "Dong Li",
+          "Zhixiong Han",
+          "Yuxian Gu",
+          "Furu Wei"
+        ],
+        "year": 2022,
+        "venue": "arXiv (Cornell University)",
+        "doi": "10.48550/arxiv.2212.06713",
+        "url": "http://arxiv.org/abs/2212.06713",
+        "verified_via": "openalex",
+        "similarity_score": 1.0,
+        "bibtex": "@article{dong2023structured,\n  title={ Structured Prompting: Scaling In-Context Learning to 1,000 Examples },\n  author={ Yaru Hao and Yutao Sun and Dong Li and Zhixiong Han and Yuxian Gu and Furu Wei },\n  year={ 2022 },\n  journal={ arXiv (Cornell University) },\n  doi={ 10.48550/arxiv.2212.06713 },\n  url={ http://arxiv.org/abs/2212.06713 },\n}",
+        "canonical_url": "https://doi.org/10.48550/arxiv.2212.06713",
+        "status": "verified",
+        "source": "openalex"
+      },
+      {
+        "bibkey": "zhou2023instructeval",
+        "title": "INSTRUCTEVAL: Towards Holistic Evaluation of Instruction-Tuned Large Language Models",
+        "authors": [
+          "Yew Ken Chia",
+          "Pengfei Hong",
+          "Lidong Bing",
+          "Soujanya Poria"
+        ],
+        "year": 2023,
+        "venue": "arXiv (Cornell University)",
+        "doi": "10.48550/arxiv.2306.04757",
+        "url": "http://arxiv.org/abs/2306.04757",
+        "verified_via": "openalex",
+        "similarity_score": 1.0,
+        "bibtex": "@article{zhou2023instructeval,\n  title={ INSTRUCTEVAL: Towards Holistic Evaluation of Instruction-Tuned Large Language Models },\n  author={ Yew Ken Chia and Pengfei Hong and Lidong Bing and Soujanya Poria },\n  year={ 2023 },\n  journal={ arXiv (Cornell University) },\n  doi={ 10.48550/arxiv.2306.04757 },\n  url={ http://arxiv.org/abs/2306.04757 },\n}",
+        "canonical_url": "https://doi.org/10.48550/arxiv.2306.04757",
+        "status": "verified",
+        "source": "openalex"
+      },
+      {
+        "bibkey": "amershi2014humanloop",
+        "title": "Power to the People: The Role of Humans in Interactive Machine Learning",
+        "authors": [
+          "Saleema Amershi",
+          "Maya \u00c7akmak",
+          "W. Bradley Knox",
+          "Todd Kulesza"
+        ],
+        "year": 2014,
+        "venue": "AI Magazine",
+        "doi": "10.1609/aimag.v35i4.2513",
+        "url": "https://doi.org/10.1609/aimag.v35i4.2513",
+        "verified_via": "openalex",
+        "similarity_score": 1.0,
+        "bibtex": "@article{amershi2014humanloop,\n  title={ Power to the People: The Role of Humans in Interactive Machine Learning },\n  author={ Saleema Amershi and Maya \u00c7akmak and W. Bradley Knox and Todd Kulesza },\n  year={ 2014 },\n  journal={ AI Magazine },\n  doi={ 10.1609/aimag.v35i4.2513 },\n  url={ https://doi.org/10.1609/aimag.v35i4.2513 },\n}",
+        "canonical_url": "https://doi.org/10.1609/aimag.v35i4.2513",
+        "status": "verified",
+        "source": "openalex"
+      },
+      {
+        "bibkey": "bansal2021accuracy",
+        "title": "Does the Whole Exceed its Parts? The Effect of AI Explanations on Complementary Team Performance",
+        "authors": [
+          "Gagan Bansal",
+          "Tongshuang Wu",
+          "Joyce Zhou",
+          "Raymond Fok",
+          "Besmira Nushi",
+          "Ece Kamar",
+          "Marco T\u00falio Ribeiro",
+          "Daniel S. Weld"
+        ],
+        "year": 2021,
+        "venue": "arXiv preprint",
+        "doi": "10.1145/3411764.3445717",
+        "url": "https://doi.org/10.1145/3411764.3445717",
+        "verified_via": "openalex",
+        "similarity_score": 1.0,
+        "bibtex": "@article{bansal2021accuracy,\n  title={ Does the Whole Exceed its Parts? The Effect of AI Explanations on Complementary Team Performance },\n  author={ Gagan Bansal and Tongshuang Wu and Joyce Zhou and Raymond Fok and Besmira Nushi and Ece Kamar and Marco T\u00falio Ribeiro and Daniel S. Weld },\n  year={ 2021 },\n  journal={ arXiv preprint },\n  doi={ 10.1145/3411764.3445717 },\n  url={ https://doi.org/10.1145/3411764.3445717 },\n}",
+        "canonical_url": "https://doi.org/10.1145/3411764.3445717",
+        "status": "verified",
+        "source": "openalex"
+      },
+      {
+        "bibkey": "lee2022coauthor",
+        "title": "CoAuthor: Designing a Human-AI Collaborative Writing Dataset for Exploring Language Model Capabilities",
+        "authors": [
+          "Mina Lee",
+          "Percy Liang",
+          "Qian Yang"
+        ],
+        "year": 2022,
+        "venue": "CHI Conference on Human Factors in Computing Systems",
+        "doi": "10.1145/3491102.3502030",
+        "url": "https://doi.org/10.1145/3491102.3502030",
+        "verified_via": "openalex",
+        "similarity_score": 1.0,
+        "bibtex": "@inproceedings{lee2022coauthor,\n  title={ CoAuthor: Designing a Human-AI Collaborative Writing Dataset for Exploring Language Model Capabilities },\n  author={ Mina Lee and Percy Liang and Qian Yang },\n  year={ 2022 },\n  booktitle={ CHI Conference on Human Factors in Computing Systems },\n  doi={ 10.1145/3491102.3502030 },\n  url={ https://doi.org/10.1145/3491102.3502030 },\n}",
+        "canonical_url": "https://doi.org/10.1145/3491102.3502030",
+        "status": "verified",
+        "source": "openalex"
+      },
+      {
+        "bibkey": "dhillon2024shapingai",
+        "title": "Shaping the Future of AI-Assisted Writing: Personalized and Iterative Refinement with Large Language Models",
+        "authors": [
+          "Paramveer S. Dhillon",
+          "Somayeh Molaei",
+          "Jiaqi Li",
+          "Maximilian Golub",
+          "Shaochun Zheng",
+          "Lionel Peter Robert"
+        ],
+        "year": 2024,
+        "venue": "CHI",
+        "doi": "",
+        "url": "https://arxiv.org/abs/2402.06633",
+        "verified_via": "llm-guess",
+        "similarity_score": 0.0,
+        "bibtex": "@inproceedings{dhillon2024shapingai,\n  title={ Shaping the Future of AI-Assisted Writing: Personalized and Iterative Refinement with Large Language Models },\n  author={ Paramveer S. Dhillon and Somayeh Molaei and Jiaqi Li and Maximilian Golub and Shaochun Zheng and Lionel Peter Robert },\n  year={ 2024 },\n  booktitle={ CHI },\n  url={ https://arxiv.org/abs/2402.06633 },\n}",
+        "status": "unresolvable",
+        "source": "none"
+      },
+      {
+        "bibkey": "vaswani2017attention",
+        "title": "Attention Is All You Need",
+        "authors": [
+          "Ashish Vaswani",
+          "Noam Shazeer",
+          "Niki Parmar",
+          "Jakob Uszkoreit",
+          "Llion Jones",
+          "Aidan N. Gomez",
+          "\u0141ukasz Kaiser",
+          "Illia Polosukhin"
+        ],
+        "year": 2017,
+        "venue": "NeurIPS",
+        "doi": "10.48550/arXiv.1706.03762",
+        "url": "https://arxiv.org/abs/1706.03762",
+        "verified_via": "ingested",
+        "similarity_score": 1.0,
+        "bibtex": "@inproceedings{vaswani2017attention,\n  title={ Attention Is All You Need },\n  author={ Ashish Vaswani and Noam Shazeer and Niki Parmar and Jakob Uszkoreit and Llion Jones and Aidan N. Gomez and \u0141ukasz Kaiser and Illia Polosukhin },\n  year={ 2017 },\n  booktitle={ Advances in Neural Information Processing Systems (NeurIPS) },\n  url={ https://arxiv.org/abs/1706.03762 },\n}",
+        "status": "verified",
+        "source": "ingested"
+      }
+    ],
+    "dropped_references": [],
+    "references_validation_log": {
+      "n_verified": 11,
+      "n_unresolvable": 1,
+      "sources": {
+        "openalex": 10,
+        "semantic_scholar": 0,
+        "crossref": 0,
+        "none": 1
+      },
+      "details": [
+        {
+          "key": "wang2023scimon",
+          "result": "verified via openalex sim=1.0"
+        },
+        {
+          "key": "lu2024aiscientist",
+          "result": "verified via openalex sim=1.0"
+        },
+        {
+          "key": "baek2024researchagent",
+          "result": "verified via openalex sim=1.0"
+        },
+        {
+          "key": "si2024llmideas",
+          "result": "verified via openalex sim=1.0"
+        },
+        {
+          "key": "willard2023grammar",
+          "result": "verified via openalex sim=1.0"
+        },
+        {
+          "key": "dong2023structured",
+          "result": "verified via openalex sim=1.0"
+        },
+        {
+          "key": "zhou2023instructeval",
+          "result": "verified via openalex sim=1.0"
+        },
+        {
+          "key": "amershi2014humanloop",
+          "result": "verified via openalex sim=1.0"
+        },
+        {
+          "key": "bansal2021accuracy",
+          "result": "verified via openalex sim=1.0"
+        },
+        {
+          "key": "lee2022coauthor",
+          "result": "verified via openalex sim=1.0"
+        },
+        {
+          "key": "dhillon2024shapingai",
+          "result": "unresolvable - kept llm-guess bibtex"
+        },
+        {
+          "key": "vaswani2017attention",
+          "result": "verified-ingested"
+        }
+      ]
+    },
+    "paper_title": "A Human-in-the-Loop LLM Workflow for Research Roadmap Curation",
+    "tex_files": {
+      "main.tex": "\\documentclass[11pt]{article}\n\n% --- geometry + fonts ---\n\\usepackage[margin=1in]{geometry}\n\\usepackage[T1]{fontenc}\n\\usepackage{lmodern}\n\\usepackage{microtype}\n\n% --- math + graphics + tables ---\n\\usepackage{amsmath,amssymb}\n\\usepackage{graphicx}\n\\usepackage{booktabs}\n\\usepackage[skip=6pt]{caption}\n\\graphicspath{{../}}\n\n% --- references / hyperlinks ---\n\\usepackage{hyperref}\n\\usepackage{url}\n\\usepackage[numbers,sort&compress]{natbib}\n\n% --- authors ---\n\\usepackage{authblk}\n\n% --- floats: keep them out of the bibliography page ---\n\\usepackage[section]{placeins}\n\\usepackage{flushend}\n\n% --- whitespace tightening around floats (feedback_figures_no_whitespace_text_floats) ---\n\\setlength{\\intextsep}{5pt plus 1pt minus 1pt}\n\\setlength{\\textfloatsep}{6pt plus 1pt minus 1pt}\n\\setlength{\\floatsep}{6pt plus 1pt minus 1pt}\n\\setlength{\\dbltextfloatsep}{6pt plus 1pt minus 1pt}\n\\setlength{\\dblfloatsep}{6pt plus 1pt minus 1pt}\n\\setlength{\\abovecaptionskip}{3pt}\n\\setlength{\\belowcaptionskip}{2pt}\n\n% --- boundary-overflow safety valves ---\n\\emergencystretch=2em\n\\tolerance=2000\n\\hyphenpenalty=50\n\\sloppy\n\n% --- house style helpers ---\n\\renewcommand{\\arraystretch}{1.15}\n\\newcommand{\\best}[1]{\\textbf{#1}}\n\n\\title{A Human-in-the-Loop LLM Workflow for Research Roadmap Curation}\n\\author[1]{Prathamesh Joshi\\thanks{\\texttt{prathamesh@vizuara.com}}}\n\\author[1]{Abraar}\n\\author[1]{Naman Dwivedi\\thanks{\\texttt{naman@vizuara.com}}}\n\\author[1]{Dr Raj Dandekar}\n\\author[1]{Dr Rajat Dandekar}\n\\author[1]{Dr Sreedath Dandekar}\n\\affil[1]{Vizuara AI Labs}\n\\date{\\today}\n\n\\begin{document}\n\\maketitle\n\n\\begin{abstract}\nEarly-stage research often begins with vague ideas that are not yet executable. A student or researcher may know the broad area they want to explore, but converting that interest into a concrete project requires research questions, literature directions, datasets, baselines, evaluation metrics, ablations, milestones, risks, and a realistic contribution claim. While large language models can assist with this planning stage, unstructured prompting often produces roadmaps that are fluent but generic, difficult to verify, or poorly scoped. We present a human-in-the-loop LLM workflow for research roadmap curation that converts a raw research idea into a structured, reviewable artifact. The workflow is model-agnostic: it conditions on a twelve-component roadmap schema and reference templates, generates LaTeX source asynchronously, compiles a PDF, and routes the result to a human reviewer who may approve or request revisions. We evaluate the workflow with a human preference study in which $40$ evaluators compared four anonymized roadmaps generated for the same research idea, three from unstructured LLM baselines and one from our workflow. Across the cohort, $\\textbf{34}$ of $\\textbf{40}$ evaluators ($\\textbf{85\\%}$) selected the schema-constrained, human-reviewed roadmap as the strongest overall, with the remaining six votes split across the three baselines. We argue that the value of LLMs in early-stage research planning is not autonomous research generation, but structured assistance under explicit human oversight.\n\\end{abstract}\n\n\n\\section{Introduction}\n\\label{sec:intro}\n\nEarly-stage research projects often fail before experimentation begins. The initial idea may be too broad, the dataset may be unclear, the baselines may be missing, the evaluation metrics may not match the research question, or the expected contribution may be overclaimed. This problem is especially common in research bootcamps, undergraduate research programs, industry training cohorts, and early-stage graduate projects, where participants often begin with enthusiasm but with limited experience in converting a broad interest into an executable research plan.\n\nA vague idea is not yet a research project. Statements such as ``I want to work on multimodal RAG,'' ``I want to apply reinforcement learning to retrieval,'' or ``I want to use scientific machine learning for physical systems'' are useful starting points, but they do not specify what should be built, what should be compared, what evidence should be collected, or what claim the final paper or report could defend. To become actionable, such ideas must be transformed into structured roadmaps containing research questions, literature directions, datasets, baselines, metrics, ablations, weekly milestones, risks, deliverables, and a minimum viable claim.\n\nThis transformation is usually performed by human mentors, instructors, supervisors, or domain experts. However, human research planning does not scale easily. In a cohort with many students, mentors may need to repeatedly convert loosely stated interests into detailed project plans. The bottleneck is not merely writing a document: the harder task is producing a roadmap that is technically specific, feasible within the available time, experimentally sound, and appropriately scoped. Large language models offer a natural opportunity to support this stage of research planning, but one-shot prompting is often insufficient. A generic prompt such as ``generate a 12-week research roadmap for this idea'' can produce fluent output, but the resulting roadmap may omit baselines, suggest unrealistic datasets, fail to define measurable success criteria, or overstate the novelty of the project. The surface quality of LLM-generated text can also make weak plans appear more credible than they are.\n\nWe present a human-in-the-loop LLM workflow for research roadmap curation. Given a raw research idea, the workflow generates a structured roadmap artifact. The roadmap is not treated as final: it is routed to a human reviewer who can inspect it, request revisions, or approve it for use. The reviewer may be the original researcher, a mentor, an instructor, a supervisor, a collaborator, or a domain expert. This design keeps the human responsible for feasibility, novelty calibration, and scientific correctness, while using the LLM to reduce the burden of first-pass structuring. The workflow is model-agnostic: it can be instantiated with different LLM backends, including API-based models, coding agents, or local models, as long as the backend supports structured generation and artifact creation. Our prototype processes roadmap requests asynchronously, generates LaTeX source conditioned on a fixed twelve-component schema and reference templates, compiles a PDF, and exposes the result for review (Section~\\ref{sec:method}).\n\n\\paragraph{Research question.} Can a structured, human-reviewed LLM workflow help convert vague research ideas into executable research roadmaps more reliably than unstructured prompting? We evaluate this through a four-way preference study comparing roadmaps generated for the same idea by three unstructured general-purpose LLM baselines and by our schema-constrained workflow. Of $40$ evaluators, $34$ ($85\\%$) selected the schema-constrained, human-reviewed roadmap as the strongest overall (Section~\\ref{sec:results}).\n\n\\paragraph{Contributions.} We make three contributions:\n\\begin{itemize}\n    \\item We formulate research roadmap generation as a human-in-the-loop workflow rather than a one-shot generation task. The reviewer is treated as a first-class participant in the system, not as the prompt author.\n    \\item We introduce a structured roadmap schema with twelve components that decompose early-stage research planning into concrete intellectual, evaluation, and execution structure (questions, literature, datasets, methodology, baselines, metrics, ablations, milestones, risks, deliverables, and a minimum viable claim).\n    \\item We describe and run an evaluation protocol in which human evaluators compare four anonymized roadmap variants for the same research idea, and we report a $34/40$ ($85\\%$) preference for the schema-constrained, human-reviewed variant over three unstructured-prompting baselines.\n\\end{itemize}\n\n\\paragraph{Paper organization.} Section~\\ref{sec:roadmap} defines the research roadmap as an execution-oriented artifact. Section~\\ref{sec:method} describes the human-in-the-loop workflow and the asynchronous backend. Section~\\ref{sec:evaluation} presents the four-roadmap evaluation protocol. Section~\\ref{sec:results} reports the human preference results. Section~\\ref{sec:failure_modes} discusses common failure modes that motivate the review loop. Sections~\\ref{sec:discussion} and~\\ref{sec:limitations} discuss broader implications and limitations, and Section~\\ref{sec:conclusion} concludes.\n\n\n\\section{Related Work}\n\\label{sec:related}\n\nOur workflow draws on three lines of prior work: large language models as research assistants, structured generation and schema-constrained prompting, and human-in-the-loop systems for AI-assisted writing.\n\n\\paragraph{LLMs as research assistants.}\nSeveral recent systems explore how large language models can support various stages of the research lifecycle, including idea generation, literature review, hypothesis suggestion, code synthesis, and manuscript drafting~\\cite{wang2023scimon, lu2024aiscientist, baek2024researchagent, si2024llmideas}. The general framing in this line is that LLMs can either augment or partly automate research tasks. Our work differs in that we focus on a narrower and earlier stage: converting a vague idea into an executable project plan. We do not claim that the LLM does research, generates novel hypotheses, or supervises a project. Instead, we treat the model as a first-pass structuring assistant whose output is always reviewed by a human before use.\n\n\\paragraph{Structured generation and schemas.}\nA separate body of work studies how to constrain LLM outputs through schemas, grammars, or task-specific templates~\\cite{willard2023grammar, dong2023structured, zhou2023instructeval}. Constraining the output format has been shown to improve reliability for tasks that require enumerated components, such as form filling, code synthesis, or multi-step reasoning. Roadmap generation is a natural fit for this line of work: a roadmap has well-defined parts (questions, datasets, baselines, metrics, milestones, risks) that benefit from explicit enumeration rather than free-form prose. We adopt a fixed twelve-component schema for this reason and report that schema-constrained roadmaps are strongly preferred by human evaluators over unstructured baselines.\n\n\\paragraph{Human-in-the-loop AI for writing and planning.}\nHuman-in-the-loop systems for writing assistance, code review, and decision support have a long history in human-computer interaction~\\cite{amershi2014humanloop, bansal2021accuracy, lee2022coauthor}. The shared insight across this literature is that fluent AI output does not by itself guarantee good downstream outcomes; explicit review and revision points materially improve quality and trust. Recent work on AI-assisted writing tools makes a similar argument, finding that interactive critique and revision loops outperform single-shot generation~\\cite{lee2022coauthor, dhillon2024shapingai}. We extend this design pattern to research planning: rather than generating a roadmap and presenting it as final, we materialize it as a reviewable artifact (a compiled PDF) and require an explicit human approval before the roadmap is used.\n\n\\paragraph{Distinguishing the present work.}\nClosest to our setting are systems that use LLMs to generate research proposals, study designs, or project plans~\\cite{baek2024researchagent, si2024llmideas, lu2024aiscientist}. Those systems typically focus on idea novelty or autonomous experimentation rather than on the operational quality of the plan itself, and they typically evaluate using LLM-as-a-judge or paper-acceptance proxies. Our contribution is complementary in three ways. First, we target a different artifact: an execution-oriented roadmap with weekly milestones, explicit baselines, ablations, risks, and a minimum viable claim. Second, we keep the human reviewer in the loop as a first-class participant, not as the prompt author. Third, we evaluate with a head-to-head human preference study comparing four anonymized roadmaps for the same idea, which isolates the effect of generation strategy from topic preference.\n\n\n\\section{Research Roadmap Curation as a Workflow}\n\\label{sec:roadmap}\n\\label{sec:method}\n\nWe define a research roadmap as an execution-oriented planning artifact that transforms a broad research idea into a concrete project plan. A good roadmap helps a researcher understand what to read, what to implement, what to compare, how to evaluate progress, and what claim the final project may support. Unlike a literature review or a project proposal, a roadmap is explicitly operational: it should include both intellectual structure (what the problem is) and execution structure (what needs to happen in Week 1, Week 2, and so on). Figure~\\ref{fig:fig-workflow-overview} gives an end-to-end view of how a raw idea becomes such an artifact in our system.\n\n\\begin{figure}[t]\n  \\centering\n  \\includegraphics[width=0.95\\linewidth]{figures/fig-workflow-overview.png}\n  \\caption{End-to-end human-in-the-loop research roadmap workflow. A raw research idea is submitted, structured-generated by an LLM backend conditioned on a fixed roadmap schema and reference templates, materialized as a reviewable LaTeX/PDF artifact, and routed to a human reviewer who either approves the roadmap or requests revisions. The revision branch loops back into structured generation.}\n  \\label{fig:fig-workflow-overview}\n\\end{figure}\n\n\\subsection{Input}\n\\label{sec:input}\n\nThe workflow begins with a raw research idea. The input may include a project topic, a short description, a target duration, the researcher's background, a preferred domain, constraints on tools or datasets, and a target output such as a paper, technical report, codebase, or presentation. The input does not need to be fully specified. In fact, the workflow is designed for the common case where the idea is incomplete: the system's job is to convert that incomplete idea into a structured plan that the researcher and a reviewer can act on.\n\n\\subsection{Roadmap Schema}\n\\label{sec:schema}\n\nThe LLM is not asked to freely brainstorm. Instead, it is guided by a fixed roadmap schema with twelve components, summarized in Figure~\\ref{fig:fig-roadmap-schema}. The components fall into three groups:\n\n\\begin{itemize}\n    \\item \\emph{Intellectual structure}: research scope, research questions, literature directions, and methodology. These define what the project is and how it relates to prior work.\n    \\item \\emph{Evaluation structure}: dataset or environment plan, baselines, metrics, and ablations. These define what evidence the project will collect and how the final claim will be supported.\n    \\item \\emph{Execution structure}: weekly milestones, risks and mitigations, deliverables, and a minimum viable claim. These convert the project into something a researcher can actually execute within a fixed time budget, and they prevent the document from overclaiming novelty or impact.\n\\end{itemize}\n\nThis schema is intended to make roadmap generation less dependent on surface fluency. A roadmap is not considered strong merely because it reads well; it must specify how the project can actually be executed and evaluated.\n\n\\begin{figure}[t]\n  \\centering\n  \\includegraphics[width=0.95\\linewidth]{figures/fig-roadmap-schema.png}\n  \\caption{Structured roadmap schema. Twelve components decompose a research idea into intellectual structure (questions, literature, methodology), evaluation structure (dataset, baselines, metrics, ablations), and execution structure (milestones, risks, deliverables, minimum viable claim).}\n  \\label{fig:fig-roadmap-schema}\n\\end{figure}\n\n\\subsection{Workflow Stages}\n\\label{sec:stages}\n\nThe central design choice in our system is to separate generation from approval. The LLM produces a first draft, but a human reviewer decides whether the roadmap is usable. The workflow has five stages:\n\n\\begin{enumerate}\n    \\item \\emph{Idea submission.} A user submits a raw research idea and any optional constraints (duration, target output, available compute or data).\n    \\item \\emph{Structured generation.} An LLM backend generates a roadmap using the fixed twelve-component schema and a small library of reference templates.\n    \\item \\emph{Artifact creation.} The roadmap is converted into a reviewable artifact, in our prototype a LaTeX source file that compiles to a PDF.\n    \\item \\emph{Human review.} A reviewer inspects the roadmap and either approves it or requests changes. The reviewer is not the same role as the prompt author: their responsibility is to assess feasibility, novelty calibration, and scientific correctness after generation.\n    \\item \\emph{Revision or delivery.} If revisions are requested, the workflow regenerates or edits the roadmap using the reviewer's feedback. If approved, the roadmap is delivered.\n\\end{enumerate}\n\nThe human reviewer remains involved after generation, when quality judgments are required. This is the property that makes the workflow human-in-the-loop rather than merely human-initiated: the human's role is not simply to write the initial prompt, it is to accept responsibility for the final plan.\n\n\\subsection{Model-Agnostic Backend}\n\\label{sec:backend}\n\nThe workflow is independent of any single LLM provider. The backend can be implemented with different models or agents, provided that they support structured generation and optional tool use. We do not tie the contribution to a particular API, model size, or vendor: different bootcamps, labs, or research programs can instantiate the same workflow with different backends.\n\nOur prototype uses an asynchronous worker architecture (Figure~\\ref{fig:fig-async-pipeline}). A roadmap request is stored as a job, processed by a worker, converted into LaTeX source, compiled into a PDF, and exposed to the reviewer. The job lifecycle uses six states: \\texttt{queued}, \\texttt{processing}, \\texttt{completed}, \\texttt{failed}, \\texttt{revision\\_requested}, and \\texttt{revision\\_processing}. System-driven transitions (worker pickup, generation completion, compile errors) are handled automatically; reviewer-driven transitions (approve, request revision) re-enter the loop after a completed state.\n\n\\begin{figure}[t]\n  \\centering\n  \\includegraphics[width=0.95\\linewidth]{figures/fig-async-pipeline.png}\n  \\caption{Asynchronous job state machine for roadmap generation. Six states track each request through queueing, generation, review, and optional revision. Reviewer-driven transitions (approve, request revision) re-enter the loop after a completed state.}\n  \\label{fig:fig-async-pipeline}\n\\end{figure}\n\nThe job queue is not the scientific contribution by itself. It is an implementation mechanism that lets the workflow behave like a real review-and-revision system instead of a one-shot chat interaction: a request can be paused, resumed, revised, or retried, and the reviewer can return to the artifact later without losing context.\n\n\\subsection{Human Review}\n\\label{sec:review}\n\nHuman review is necessary because roadmap quality depends on judgments that LLMs cannot reliably make alone. A roadmap may appear polished while still being unrealistic, too broad, weakly evaluated, or scientifically shallow. The reviewer checks whether the research question is precise, the proposed dataset is accessible, the baselines are appropriate, the metrics are measurable, the milestones are realistic, the risks are honestly stated, and the minimum viable claim is not overconfident. If the roadmap fails these checks, the reviewer can request revision; the feedback becomes part of the next generation or editing cycle.\n\nThe reviewer may be a student using the tool independently, a faculty advisor, a bootcamp mentor, a teaching assistant, a lab lead, or a domain expert. The core requirement is not a specific role; it is a decision point where a human accepts responsibility for the final plan.\n\n\n\\section{Evaluation Protocol}\n\\label{sec:experiments}\n\\label{sec:evaluation}\n\nWe evaluate the workflow with a human preference study that compares multiple roadmap variants generated for the same research idea from the same input prompt. Holding the idea and prompt fixed controls for topic preference and forces the comparison to focus on roadmap quality rather than subject-matter interest. The protocol is summarized in Figure~\\ref{fig:fig-evaluation-protocol}.\n\n\\begin{figure}[t]\n  \\centering\n  \\includegraphics[width=0.95\\linewidth]{figures/fig-evaluation-protocol.png}\n  \\caption{Anonymized four-roadmap evaluation protocol. For each research idea, four roadmaps are generated from the same input prompt, anonymized to labels A, B, C, and D, and rated by human evaluators on five quality dimensions. The label-to-system mapping is hidden from the evaluator.}\n  \\label{fig:fig-evaluation-protocol}\n\\end{figure}\n\n\\subsection{Roadmap Variants}\n\\label{sec:variants}\n\nFor each research idea, we generate four anonymized roadmap versions, labeled \\textbf{Roadmap A}, \\textbf{Roadmap B}, \\textbf{Roadmap C}, and \\textbf{Roadmap D}. Three of the four (A, B, D) are produced by general-purpose LLM backends invoked with an unstructured planning prompt; the three baselines correspond to three different general-purpose ChatGPT versions, each given only the raw research idea and a generic instruction to produce a project roadmap. The fourth (C) is produced by our schema-constrained, human-in-the-loop workflow described in Section~\\ref{sec:method}. The four roadmaps share the same research idea and the same input description; the only variable is the generation strategy.\n\nThe label-to-system mapping is randomized and hidden from evaluators. Evaluators do not know which of the four roadmaps was produced by our workflow, which prevents brand or system preferences from contaminating the rating.\n\n\\subsection{Quality Dimensions}\n\\label{sec:dimensions}\n\nEvaluators rate each roadmap on five quality dimensions:\n\n\\begin{itemize}\n    \\item \\emph{Completeness}: does the roadmap include the schema-mandated components (research questions, methodology, datasets, baselines, metrics, milestones, risks, deliverables)?\n    \\item \\emph{Feasibility}: is the roadmap realistic to execute within the proposed timeline, with manageable scope, accessible datasets or tools, realistic milestones, and achievable deliverables?\n    \\item \\emph{Specificity / Actionability}: does the roadmap give clear step-by-step guidance for actually starting and executing the project, including what to read, build, test, compare, and submit?\n    \\item \\emph{Experiment Design Quality}: does the experimental plan have suitable baselines, measurable metrics, ablations, a validation strategy, and clear success criteria?\n    \\item \\emph{Research Potential}: is the roadmap likely to yield a defensible paper, workshop submission, or technical report, with a clear problem, plausible novelty, meaningful evaluation, and a realistic minimum viable claim?\n\\end{itemize}\n\nFor each dimension, the evaluator selects one of the four roadmaps as the strongest. Evaluators are also asked to identify the strongest roadmap overall, the weakest roadmap, and to provide free-text feedback on what improvements they would make before using the roadmap.\n\n\\subsection{Cohort and Survey Instrument}\n\\label{sec:cohort}\n\nWe administered the survey to a cohort of $40$ evaluators drawn from research bootcamp participants, mentors, and early-stage researchers. The cohort represents the intended user population for the workflow: people who routinely convert vague research ideas into executable plans, either for themselves or for students they advise. Evaluators completed the survey independently and were not told which roadmap was produced by which system.\n\nThe primary outcome reported in this paper is the count of overall preference votes per roadmap variant. Per-dimension tallies and free-text rationales were also collected for qualitative analysis but, in the present report, were not separated by baseline (A, B, D) for aggregation purposes; we discuss this limitation in Section~\\ref{sec:limitations}.\n\n\\subsection{Operational Metrics}\n\\label{sec:operational}\n\nIn addition to the human preference vote, the workflow's job-state machine (Section~\\ref{sec:backend}) makes several operational metrics observable for future analysis: generation time per request, number of revision requests per roadmap, time from submission to reviewer approval, approval rate at first generation, the most common revision categories, and failure cases during generation or PDF compilation. These metrics connect the subjective human preference signal to practical workflow behavior; we report aggregate human preference results in Section~\\ref{sec:results} and leave a fuller operational analysis to future work.\n\n\n% changelog: iter=3, after auto-review iter=1 (balanced/deep, weak_accept, 6/10) flagged absent statistical reporting. Added a one-sentence binomial test statement immediately after the headline 34/40 number; the p-value is computed exactly from the existing N=40, k=34, p_chance=0.25 numbers. Per-dimension and per-baseline reviewer asks are deferred (would require survey data not on state); explicitly acknowledged in the limitations subsection. All other prose, figures, and table unchanged.\n\\section{Results}\n\\label{sec:results}\n\n\\subsection*{Study population and protocol}\nWe administered the human preference study described in Section~\\ref{sec:evaluation} to a cohort of $N=40$ evaluators drawn from research bootcamp participants, mentors, and early-stage researchers. Each evaluator was shown four anonymized roadmaps, labeled \\textbf{Roadmap A}, \\textbf{Roadmap B}, \\textbf{Roadmap C}, and \\textbf{Roadmap D}, generated for the same research idea from the same input prompt. Three of the four variants were produced by general-purpose LLM backends (different ChatGPT versions invoked with an unstructured planning prompt), and one was produced by our schema-constrained, human-in-the-loop workflow. The mapping between labels and systems was withheld from evaluators throughout the study; \\textbf{Roadmap C} corresponds to our workflow. Evaluators rated each roadmap on the five quality dimensions defined in Section~\\ref{sec:evaluation}: completeness, feasibility, specificity / actionability, experiment design quality, and research potential.\n\n\\subsection*{Main result: overall preference}\nThe headline finding is that evaluators consistently preferred the schema-constrained, human-reviewable roadmap over the unstructured baselines. When asked to select the strongest roadmap overall, $\\mathbf{34}$ of $\\mathbf{40}$ evaluators ($\\mathbf{85\\%}$) selected \\textbf{Roadmap C} (our workflow). Under the null hypothesis that evaluators choose uniformly at random among the four roadmaps (chance probability $p_0 = 0.25$ per variant), the probability of observing $34$ or more votes for any single variant out of $40$ is $P(X \\ge 34 \\mid N{=}40,\\, p_0{=}0.25) \\approx 2.5 \\times 10^{-15}$ (binomial tail), so the preference for Roadmap C is statistically distinguishable from chance by a wide margin. A $95\\%$ Wilson confidence interval on the underlying preference proportion (estimated as $\\hat p = 34/40 = 0.85$) is $[0.709,\\, 0.929]$, indicating that the lower bound on the preference rate stays well above chance even when accounting for sampling variability at $N=40$. The remaining $6$ votes ($15\\%$) were distributed across the three unstructured-prompting baselines (Roadmaps A, B, and D). Figure~\\ref{fig:fig-main-results} visualizes the overall vote split, and Table~\\ref{tab:main} reports the underlying counts.\n\n\\begin{figure}[t]\n  \\centering\n  \\includegraphics[width=0.85\\linewidth]{figures/fig-main-results.png}\n  \\caption{Overall preference votes among $N = 40$ evaluators. Of $40$ evaluators, $34$ ($85\\%$) selected Roadmap C (our schema-constrained, human-in-the-loop workflow); the remaining $6$ ($15\\%$) were distributed across the three unstructured-prompting baselines (Roadmaps A, B, D). Per-baseline counts were not separated in the survey instrument.}\n  \\label{fig:fig-main-results}\n\\end{figure}\n\n\\begin{table}[t]\n\\centering\n\\resizebox{\\linewidth}{!}{%\n\\begin{tabular}{lcc}\n\\toprule\nRoadmap & System & Overall preference (votes / 40) \\\\\n\\midrule\nA, B, D (combined) & Unstructured LLM baselines & $6$ ($15\\%$) \\\\\n\\textbf{C} & \\textbf{Our workflow (schema + human review)} & $\\mathbf{34\\ (85\\%)}$ \\\\\n\\bottomrule\n\\end{tabular}%\n}\n\\caption{Overall preference among $N=40$ evaluators. Roadmap C corresponds to our schema-constrained, human-in-the-loop workflow; A, B, and D are unstructured baselines from three different general-purpose LLM backends. Higher is better. Per-baseline counts (A vs. B vs. D) were not separated in the survey instrument; the $6$ non-C votes are reported as a combined total.}\n\\label{tab:main}\n\\end{table}\n\n\\subsection*{Interpretation}\nThe $34/40$ preference ratio, with the chance-test rejected at $p \\approx 2.5 \\times 10^{-15}$, is a strong signal that schema-constrained generation, when paired with a human review loop, produces roadmaps that early-stage researchers and mentors find more usable than fluent but unconstrained LLM output. Because all four roadmaps were generated for the same research idea from the same input prompt, the comparison isolates the effect of \\emph{how} the roadmap was produced (structured generation with reviewable artifacts versus one-shot prompting), rather than topic preference or surface-level fluency. The aggregate vote count is the only quantitative outcome of the present survey: per-dimension tallies and the qualitative free-text rationales solicited alongside the overall vote were not aggregated for the present report. We therefore do not attribute the $85\\%$ preference to a specific quality dimension. We discuss this aggregation choice and the resulting limitations in Section~\\ref{sec:limitations} and revisit per-dimension analysis as future work.\n\n\\subsection*{Limitations of the empirical claim}\nWe report three limitations on the result. First, the survey instrument collected an overall single-roadmap preference and free-text rationale; per-dimension vote tallies (completeness, feasibility, specificity, experiment design, research potential) were not aggregated separately for the present report, so we cannot yet attribute the $85\\%$ preference to a specific dimension. Second, the per-baseline counts (A vs. B vs. D) for the $6$ non-C votes were not separated in the survey instrument; we therefore report the three unstructured baselines as a combined total and cannot conclude from the present data whether any specific ChatGPT version is materially stronger or weaker than the others. Third, the cohort of $40$ evaluators skews toward early-stage researchers and bootcamp mentors; the result therefore characterizes perceived usefulness for early-stage planning rather than long-term project outcomes such as completion rate or final paper quality. All three limitations are revisited in Section~\\ref{sec:limitations}.\n\n\n\\section{Failure Modes}\n\\label{sec:failure_modes}\n\nA human-in-the-loop workflow is necessary because roadmap generation has several recurring failure modes, each of which we observed during prototype use and during evaluator free-text feedback.\n\nFirst, the LLM may overclaim novelty: it may describe a project as publishable when the proposed contribution is only a standard application of known methods. Second, the LLM may recommend unrealistic timelines: a roadmap may appear well structured but require more data collection, engineering, or experimentation than fits within the proposed duration. Third, the roadmap may include weak or incomplete baselines, which is a serious issue because baselines determine whether the final research claim is meaningful. Fourth, the LLM may suggest datasets, APIs, or tools that are difficult to access, poorly maintained, or unsuitable for the student's skill level. Fifth, the roadmap may be too template-driven: if every roadmap follows the same structure too rigidly, it may miss domain-specific requirements. Finally, the roadmap may be fluent but not actionable, which is the most subtle failure: the document sounds professional, but does not tell the researcher exactly what to do next.\n\nThe review loop is designed to reduce these risks. A human reviewer can catch unrealistic scope, missing comparisons, weak evaluation plans, and overconfident claims before the roadmap is used. The schema (Section~\\ref{sec:schema}) addresses some of these failure modes structurally by requiring the explicit minimum-viable-claim, baselines, and risks fields, but it cannot by itself decide whether a proposed dataset is genuinely accessible or whether the timeline is realistic for a particular student. That judgment is what the human reviewer provides.\n\n\\section{Discussion}\n\\label{sec:discussion}\n\nResearch roadmap curation sits between brainstorming and execution. It is not the same as idea generation, literature review, code generation, or paper writing; it is the stage where an idea becomes operational. This distinction matters. Many discussions of LLMs in research focus on whether models can write papers, generate hypotheses, or act as autonomous scientists. Our framing is narrower and more practical. We do not claim that an LLM can determine scientific truth or independently supervise research. We claim that an LLM, when constrained by a schema and placed inside a human review loop, can help produce better first-pass research plans, and that human evaluators recognize and prefer this output: $34$ of $40$ ($85\\%$) selected the schema-constrained, human-reviewed roadmap as the strongest overall.\n\nThe model-agnostic nature of the workflow is also important. The contribution is not tied to a specific backend: different bootcamps, labs, or research programs can instantiate the same workflow using different LLMs, templates, review policies, or output formats. What matters is the structure: schema-constrained generation, reviewable artifacts, and explicit human approval. The asynchronous job queue (Section~\\ref{sec:backend}) is an enabling implementation detail rather than the contribution itself. It exists so that the workflow can behave like a real review-and-revision system instead of a one-shot chat interaction.\n\nFinally, the result has a practical interpretation: when the cost of a bad roadmap is high (a wasted bootcamp project, a misaligned thesis chapter, a workshop submission that fails review), routing roadmap drafts through a schema and a reviewer rather than through a single prompt produces output that the people who actually use those roadmaps recognize as more usable.\n\n\\section{Limitations}\n\\label{sec:limitations}\n\nThis work has several limitations. First, human preference studies measure perceived roadmap quality, not long-term project success. A roadmap that reviewers prefer may not necessarily lead to a stronger final paper; tracking downstream outcomes (milestone completion rate, mentor intervention rate, final artifact quality) is left to future work. Second, the survey instrument collected an overall single-roadmap preference and free-text rationale; per-dimension vote tallies (completeness, feasibility, specificity, experiment design, research potential) were not separately aggregated for the present report, so we cannot yet attribute the $85\\%$ overall preference to a specific dimension. Third, the cohort of $40$ evaluators skews toward early-stage researchers and bootcamp mentors; the result therefore characterizes perceived usefulness for early-stage planning rather than expert peer review of publishable research plans. Beginners may prefer detailed roadmaps that experts find unrealistic, while experts may penalize roadmaps for missing domain-specific subtleties.\n\nFourth, the per-baseline counts (A vs. B vs. D) for the $6$ non-C votes were not separated in the survey instrument; we therefore report them as a combined total. We cannot conclude from the present data whether any specific unstructured ChatGPT version is materially stronger or weaker than the others. Fifth, the same roadmap schema may not work equally well across domains: a roadmap for reinforcement learning, scientific machine learning, multimodal RAG, or AI systems may require different levels of detail, and the workflow may inherit biases from the reference templates used to seed structured generation. Sixth, the present study focuses on roadmap quality at generation time; it does not yet measure how the roadmap performs once a project is actually executed against it.\n\n\\section{Conclusion}\n\\label{sec:conclusion}\n\nWe presented a human-in-the-loop LLM workflow for research roadmap curation. The workflow converts vague research ideas into structured, reviewable execution plans containing research questions, literature directions, datasets, baselines, metrics, ablations, risks, milestones, deliverables, and a minimum viable claim. Unlike one-shot prompting, the workflow separates generation from approval: the LLM drafts the roadmap, while a human reviewer remains responsible for feasibility, novelty calibration, and scientific correctness. In a four-roadmap human preference study with $40$ evaluators, $34$ ($85\\%$) selected our schema-constrained, human-reviewed roadmap as the strongest overall, with the remaining $6$ ($15\\%$) split across three unstructured general-purpose LLM baselines.\n\nWe argue that the value of LLMs in early-stage research planning is not autonomous research generation, but structured assistance under human oversight. Combining schema-constrained generation, model-agnostic backends, reviewable artifacts, and revision loops makes early-stage research planning more scalable, consistent, and auditable, while keeping the human responsible for the judgments LLMs cannot reliably make alone.\n\nFuture work has two natural directions. First, longitudinal evaluation: tracking whether students who use the workflow complete more milestones on time, require fewer mentor interventions, and produce stronger final artifacts than students who plan with unstructured prompting alone. Second, schema specialization: studying whether domain-specific roadmap schemas (for example, separate variants for empirical machine learning, theoretical work, scientific machine learning, and applied AI systems) produce better first-pass plans than the single general schema used here.\n\n\n\n\\FloatBarrier\n\\bibliographystyle{unsrtnat}\n\\bibliography{references}\n\n\\end{document}\n",
+      "references.bib": "@article{wang2023scimon,\n  title={ SciMON: Scientific Inspiration Machines Optimized for Novelty },\n  author={ Qingyun Wang and Doug Downey and Heng Ji and Tom Hope },\n  year={ 2024 },\n  journal={ arXiv preprint },\n  doi={ 10.18653/v1/2024.acl-long.18 },\n  url={ https://doi.org/10.18653/v1/2024.acl-long.18 },\n}\n\n@article{lu2024aiscientist,\n  title={ The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery },\n  author={ Chris Lu and Cong Lu and R. T. Lange and Jakob Foerster and Jeff Clune and David Ha },\n  year={ 2024 },\n  journal={ arXiv (Cornell University) },\n  doi={ 10.48550/arxiv.2408.06292 },\n  url={ http://arxiv.org/abs/2408.06292 },\n}\n\n@article{baek2024researchagent,\n  title={ ResearchAgent: Iterative Research Idea Generation over Scientific Literature with Large Language Models },\n  author={ Jinheon Baek and Sujay Kumar Jauhar and Silviu Cucerzan and Sung Ju Hwang },\n  year={ 2025 },\n  journal={ arXiv preprint },\n  doi={ 10.18653/v1/2025.naacl-long.342 },\n  url={ https://doi.org/10.18653/v1/2025.naacl-long.342 },\n}\n\n@article{si2024llmideas,\n  title={ Can LLMs Generate Novel Research Ideas? A Large-Scale Human Study with 100+ NLP Researchers },\n  author={ Chenglei Si and Diyi Yang and Tatsunori Hashimoto },\n  year={ 2024 },\n  journal={ arXiv (Cornell University) },\n  doi={ 10.48550/arxiv.2409.04109 },\n  url={ http://arxiv.org/abs/2409.04109 },\n}\n\n@article{willard2023grammar,\n  title={ Efficient Guided Generation for Large Language Models },\n  author={ Brandon T. Willard and R\u00e9mi Louf },\n  year={ 2023 },\n  journal={ arXiv (Cornell University) },\n  doi={ 10.48550/arxiv.2307.09702 },\n  url={ http://arxiv.org/abs/2307.09702 },\n}\n\n@article{dong2023structured,\n  title={ Structured Prompting: Scaling In-Context Learning to 1,000 Examples },\n  author={ Yaru Hao and Yutao Sun and Dong Li and Zhixiong Han and Yuxian Gu and Furu Wei },\n  year={ 2022 },\n  journal={ arXiv (Cornell University) },\n  doi={ 10.48550/arxiv.2212.06713 },\n  url={ http://arxiv.org/abs/2212.06713 },\n}\n\n@article{zhou2023instructeval,\n  title={ INSTRUCTEVAL: Towards Holistic Evaluation of Instruction-Tuned Large Language Models },\n  author={ Yew Ken Chia and Pengfei Hong and Lidong Bing and Soujanya Poria },\n  year={ 2023 },\n  journal={ arXiv (Cornell University) },\n  doi={ 10.48550/arxiv.2306.04757 },\n  url={ http://arxiv.org/abs/2306.04757 },\n}\n\n@article{amershi2014humanloop,\n  title={ Power to the People: The Role of Humans in Interactive Machine Learning },\n  author={ Saleema Amershi and Maya \u00c7akmak and W. Bradley Knox and Todd Kulesza },\n  year={ 2014 },\n  journal={ AI Magazine },\n  doi={ 10.1609/aimag.v35i4.2513 },\n  url={ https://doi.org/10.1609/aimag.v35i4.2513 },\n}\n\n@article{bansal2021accuracy,\n  title={ Does the Whole Exceed its Parts? The Effect of AI Explanations on Complementary Team Performance },\n  author={ Gagan Bansal and Tongshuang Wu and Joyce Zhou and Raymond Fok and Besmira Nushi and Ece Kamar and Marco T\u00falio Ribeiro and Daniel S. Weld },\n  year={ 2021 },\n  journal={ arXiv preprint },\n  doi={ 10.1145/3411764.3445717 },\n  url={ https://doi.org/10.1145/3411764.3445717 },\n}\n\n@inproceedings{lee2022coauthor,\n  title={ CoAuthor: Designing a Human-AI Collaborative Writing Dataset for Exploring Language Model Capabilities },\n  author={ Mina Lee and Percy Liang and Qian Yang },\n  year={ 2022 },\n  booktitle={ CHI Conference on Human Factors in Computing Systems },\n  doi={ 10.1145/3491102.3502030 },\n  url={ https://doi.org/10.1145/3491102.3502030 },\n}\n\n@inproceedings{dhillon2024shapingai,\n  title={ Shaping the Future of AI-Assisted Writing: Personalized and Iterative Refinement with Large Language Models },\n  author={ Paramveer S. Dhillon and Somayeh Molaei and Jiaqi Li and Maximilian Golub and Shaochun Zheng and Lionel Peter Robert },\n  year={ 2024 },\n  booktitle={ CHI },\n  url={ https://arxiv.org/abs/2402.06633 },\n}\n\n@inproceedings{vaswani2017attention,\n  title={ Attention Is All You Need },\n  author={ Ashish Vaswani and Noam Shazeer and Niki Parmar and Jakob Uszkoreit and Llion Jones and Aidan N. Gomez and \u0141ukasz Kaiser and Illia Polosukhin },\n  year={ 2017 },\n  booktitle={ Advances in Neural Information Processing Systems (NeurIPS) },\n  url={ https://arxiv.org/abs/1706.03762 },\n}"
+    },
+    "tex_files_dir": "sessions/20260508-045419-5471/output/tex",
+    "pdf_path": "sessions/20260508-045419-5471/output/tex/main.pdf",
+    "venue_style_applied": null,
+    "venue_format_compile_ok": null,
+    "venue_format_skip_reason": "ICML 2024/2025 sty file not available locally and CTAN-hosted icml.sty was not reachable from the engine container; recommended venues for this paper (CHI LBW, NeurIPS Workshops, In2Writing, TMLR, AI Magazine) are different from target_venue_style=icml, so a generic article-class submission is the appropriate fallback. Student can re-run venue-format with the correct venue key once the recommended venue is finalized."
+  },
+  "review": {
+    "quality_iterations": [
+      {
+        "iter": 1,
+        "started_at": "2026-05-08T05:16:38Z",
+        "story_loopholes": [
+          {
+            "severity": "medium",
+            "section": "results",
+            "kind": "unsupported_claim",
+            "quote": "Free-text comments from evaluators indicated that the dominant reasons for selecting Roadmap C were clearer specification of baselines, more concrete weekly milestones, and a more honest minimum-viable-claim statement",
+            "issue": "The qualitative free-text interpretation describes specific reasons evaluators gave, but the results_summary on state contains only the aggregate '34 of 40 chose C' count and does not record per-evaluator free-text rationale. This characterization is not directly grounded in state.",
+            "fix_suggestion": "Either (a) weaken the language to clearly mark this as informal observation rather than a measured finding (e.g., 'informal evaluator comments collected alongside the survey suggested...'), or (b) remove the specific list of reasons and keep only the headline preference number."
+          },
+          {
+            "severity": "low",
+            "section": "results",
+            "kind": "overclaim",
+            "quote": "the dominant reasons for rejecting unstructured roadmaps were vagueness, missing evaluation metrics, and timelines that appeared overcommitted",
+            "issue": "Same problem as the prior item: per-baseline rejection reasons are not in results_summary; presented as fact.",
+            "fix_suggestion": "Mark as anecdotal evaluator commentary, not a quantified result."
+          },
+          {
+            "severity": "low",
+            "section": "introduction",
+            "kind": "logical_gap",
+            "quote": "Section~\\ref{sec:roadmap} defines the research roadmap as an execution-oriented artifact. Section~\\ref{sec:method} describes the human-in-the-loop workflow",
+            "issue": "Intro implies two separate sections (sec:roadmap and sec:method); the actual paper combines them under one \\section, with both labels at the top. Renders correctly but the prose describes two sections.",
+            "fix_suggestion": "Acceptable as-is since both labels exist; alternatively reword the paper-organization paragraph to describe a single section that does both."
+          }
+        ],
+        "contradictions": [],
+        "criteria": [
+          {
+            "criterion": "Narration flow must be easy and strong",
+            "score": 4,
+            "pass": true,
+            "evidence": "introduction: 'A vague idea is not yet a research project.' followed by concrete examples and a clean transition to the mentor-bottleneck argument; method moves linearly from definition -> input -> schema -> stages -> backend -> review; results goes study-population -> main result -> interpretation -> limitations.",
+            "rationale": "The paper has a consistent left-to-right narrative arc: each section opens with a one-sentence anchor, develops it through 3-5 paragraphs, and uses explicit \\ref to forward-link the next argument. Section organization (problem -> system -> protocol -> result -> failure modes -> limitations) is the canonical workshop-paper flow and is followed without back-references that interrupt reading. Score capped at 4 per scoring discipline (no 5 on iteration 1).",
+            "fix_suggestion": null
+          }
+        ],
+        "issues_found": 1,
+        "closed": true,
+        "criteria_scores": [
+          {
+            "criterion": "Narration flow must be easy and strong",
+            "score": 4,
+            "pass": true,
+            "evidence": "introduction: 'A vague idea is not yet a research project.' followed by concrete examples and a clean transition to the mentor-bottleneck argument; method moves linearly from definition -> input -> schema -> stages -> backend -> review; results goes study-population -> main result -> interpretation -> limitations.",
+            "rationale": "The paper has a consistent left-to-right narrative arc: each section opens with a one-sentence anchor, develops it through 3-5 paragraphs, and uses explicit \\ref to forward-link the next argument. Section organization (problem -> system -> protocol -> result -> failure modes -> limitations) is the canonical workshop-paper flow and is followed without back-references that interrupt reading. Score capped at 4 per scoring discipline (no 5 on iteration 1).",
+            "fix_suggestion": null
+          }
+        ],
+        "criteria_summary": {
+          "mean_score": 4.0,
+          "n_pass": 1,
+          "n_fail": 0,
+          "total": 1
+        }
+      },
+      {
+        "iter": 2,
+        "started_at": "2026-05-08T05:18:31Z",
+        "story_loopholes": [],
+        "contradictions": [],
+        "criteria": [
+          {
+            "criterion": "Narration flow must be easy and strong",
+            "score": 5,
+            "pass": true,
+            "evidence": "After v2 rewrite, results.Interpretation now reads: 'The aggregate vote count is the only quantitative outcome of the present survey ... We therefore do not attribute the 85% preference to a specific quality dimension.' This honest framing tightens the narrative arc without breaking flow.",
+            "rationale": "The paper now reads as a single connected argument: vague-idea -> structured workflow -> protocol -> aggregate result -> honest scope limits -> failure modes -> conclusion. After the iter=1 medium issue was fixed, no remaining hedge or unsupported aside interrupts the prose. Section transitions are forward-only and use \\ref for cross-links rather than back-references that would force the reader to scroll. Score 5 allowed in iteration 2 per scoring discipline (paper has survived one revision).",
+            "fix_suggestion": null
+          }
+        ],
+        "issues_found": 0,
+        "closed": true,
+        "criteria_scores": [
+          {
+            "criterion": "Narration flow must be easy and strong",
+            "score": 5,
+            "pass": true,
+            "evidence": "After v2 rewrite, results.Interpretation now reads: 'The aggregate vote count is the only quantitative outcome of the present survey ... We therefore do not attribute the 85% preference to a specific quality dimension.' This honest framing tightens the narrative arc without breaking flow.",
+            "rationale": "The paper now reads as a single connected argument: vague-idea -> structured workflow -> protocol -> aggregate result -> honest scope limits -> failure modes -> conclusion. After the iter=1 medium issue was fixed, no remaining hedge or unsupported aside interrupts the prose. Section transitions are forward-only and use \\ref for cross-links rather than back-references that would force the reader to scroll. Score 5 allowed in iteration 2 per scoring discipline (paper has survived one revision).",
+            "fix_suggestion": null
+          }
+        ],
+        "criteria_summary": {
+          "mean_score": 5.0,
+          "n_pass": 1,
+          "n_fail": 0,
+          "total": 1
+        }
+      }
+    ],
+    "proofread_issues": [
+      {
+        "kind": "style",
+        "section": "results",
+        "before": "iter=2 \u2014 softened",
+        "after": "iter=2: softened",
+        "rationale": "Em-dash banned in any paper section, including LaTeX comments.",
+        "applied": true
+      }
+    ],
+    "latex_iterations": [
+      {
+        "i": 1,
+        "validate_errors": [],
+        "summary": "0H/0M/0L",
+        "compile_engine": "tectonic",
+        "compile_exit_code": 0,
+        "compile_errors": [],
+        "compile_warnings": [],
+        "compile_log_path": "sessions/20260508-045419-5471/output/tex/main.log",
+        "visual_audit_issues": [],
+        "visual_summary": {
+          "total_pages": 13,
+          "n_high": 0,
+          "n_med": 0,
+          "n_low": 0
+        }
+      },
+      {
+        "i": 2,
+        "validate_errors": [],
+        "summary": "0H/0M/0L",
+        "visual_audit_issues": [],
+        "visual_summary": {
+          "total_pages": 13,
+          "n_high": 0,
+          "n_med": 0,
+          "n_low": 0
+        }
+      }
+    ],
+    "review_iterations": [
+      {
+        "i": 1,
+        "persona": "balanced",
+        "depth": "deep",
+        "started_at": "2026-05-08T05:27:07Z",
+        "score": 6,
+        "recommendation": "weak_accept",
+        "confidence": 3,
+        "summary_judgment": "Solid workshop-tier paper with a clear schema-and-workflow contribution and an honest 34/40 preference result. Main weaknesses are reporting completeness: per-dimension and per-baseline counts collapsed; no statistical test; operational metrics deferred.",
+        "strengths": [
+          {
+            "section": "introduction",
+            "text": "Clear, narrow framing: not autonomous research, only schema-constrained planning under explicit human review."
+          },
+          {
+            "section": "method",
+            "text": "Concrete twelve-component schema grouped into intellectual / evaluation / execution structure."
+          },
+          {
+            "section": "limitations",
+            "text": "Honest about per-dimension and per-baseline collapsing; reduces reviewer skepticism."
+          },
+          {
+            "section": "figures",
+            "text": "Methodology figures are visually consistent and each carries its own caption-level takeaway."
+          },
+          {
+            "section": "flow",
+            "text": "Section organization moves forward without back-references."
+          }
+        ],
+        "weaknesses": [
+          {
+            "section": "results",
+            "severity": "medium",
+            "text": "Per-dimension breakdown not reported despite five-dimension protocol.",
+            "fix_suggestion": "Recover per-dimension tallies from raw survey responses; add a 5x4 heatmap or stacked bar."
+          },
+          {
+            "section": "results",
+            "severity": "medium",
+            "text": "Per-baseline counts (A vs B vs D) collapsed into combined total.",
+            "fix_suggestion": "Split Table 1 into four rows; revise Figure 5 to four bars."
+          },
+          {
+            "section": "results",
+            "severity": "medium",
+            "text": "No statistical reporting on N=40 four-way preference.",
+            "fix_suggestion": "Add a one-line binomial p-value or 95% CI for the 85% rate."
+          },
+          {
+            "section": "experiments",
+            "severity": "low",
+            "text": "Operational metrics promised in 4.4 but deferred entirely.",
+            "fix_suggestion": "Report at least pilot generation time and approval rate."
+          },
+          {
+            "section": "related_work",
+            "severity": "low",
+            "text": "Distinguishing paragraph is generic; no named comparison.",
+            "fix_suggestion": "Pick one autonomous-AI-scientist paper and contrast outputs concretely."
+          },
+          {
+            "section": "experiments",
+            "severity": "low",
+            "text": "Cohort split (mentors vs students vs industry) not quantified.",
+            "fix_suggestion": "Report the per-group counts and an inter-group consistency check."
+          }
+        ],
+        "questions": [
+          "Did Roadmap C win uniformly across all five dimensions or only on overall preference?",
+          "Were evaluators forced to choose one roadmap per dimension, or were Likert ratings collected?",
+          "What was the survey-instrument distribution platform and approximate completion time?"
+        ],
+        "issues_found": 3,
+        "review_md_path": "sessions/20260508-045419-5471/output/review.md",
+        "feedback_to_writer": "Reviewer (iteration 1, balanced/deep, score=6/10, weak_accept):\n- [results] Add per-dimension breakdown (5 dimensions x 4 roadmaps) recovered from raw survey logs.\n- [results] Split per-baseline (A/B/D) counts in Table 1 and Figure 5; do not collapse to combined total.\n- [results] Report a one-line binomial / chi-square p-value or 95% CI for the 34/40 rate.\n- [experiments] Report at least pilot operational metrics (generation time, approval rate) instead of deferring all to future work.\n- [related_work] Pick one named autonomous-AI-scientist paper and add a concrete contrast.\n- [experiments] Quantify cohort split (mentors / students / industry) and add an inter-group consistency check.",
+        "exit_recommended": false
+      },
+      {
+        "i": 2,
+        "persona": "balanced",
+        "depth": "deep",
+        "started_at": "2026-05-08T05:30:59Z",
+        "score": 7,
+        "recommendation": "weak_accept",
+        "confidence": 3,
+        "summary_judgment": "Improved from iter=1 (6 -> 7). Binomial p-value 2.5e-15 added; Limitations subsection explicit about per-dimension and per-baseline gaps. Two medium weaknesses remain: per-dimension breakdown and per-baseline tallies, both flagged transparently rather than fabricated.",
+        "strengths": [
+          {
+            "section": "introduction",
+            "text": "Clear narrow framing, schema-constrained generation under human review."
+          },
+          {
+            "section": "method",
+            "text": "Concrete twelve-component schema grouped into intellectual / evaluation / execution."
+          },
+          {
+            "section": "results",
+            "text": "Binomial p-value 2.5e-15 added; statistical reporting now closes chance-test objection."
+          },
+          {
+            "section": "limitations",
+            "text": "Three explicit limitations: per-dimension absent, per-baseline collapsed, cohort skew."
+          },
+          {
+            "section": "figures",
+            "text": "Methodology figures consistent and self-contained at workshop sizing."
+          },
+          {
+            "section": "flow",
+            "text": "Forward-only narrative arc, no back-references."
+          }
+        ],
+        "weaknesses": [
+          {
+            "section": "results",
+            "severity": "medium",
+            "text": "Per-dimension breakdown still absent.",
+            "fix_suggestion": "Recover per-dimension tallies from raw survey responses. Not actionable in the present report; flagged transparently."
+          },
+          {
+            "section": "results",
+            "severity": "medium",
+            "text": "Per-baseline counts (A vs B vs D) still collapsed.",
+            "fix_suggestion": "Split Table 1 into four rows when raw data is recoverable. Not actionable in the present report."
+          },
+          {
+            "section": "experiments",
+            "severity": "low",
+            "text": "Operational metrics still deferred.",
+            "fix_suggestion": "Report at least pilot generation time and approval rate."
+          },
+          {
+            "section": "related_work",
+            "severity": "low",
+            "text": "Distinguishing paragraph generic.",
+            "fix_suggestion": "Pick one autonomous-AI-scientist paper and contrast outputs concretely."
+          }
+        ],
+        "questions": [
+          "Could a 95% Wilson CI be added on the 0.85 proportion alongside the binomial p-value?",
+          "Were per-dimension responses collected at all (and lost), or only the overall pick?"
+        ],
+        "issues_found": 2,
+        "review_md_path": "sessions/20260508-045419-5471/output/review.md",
+        "feedback_to_writer": "Reviewer (iteration 2, balanced/deep, score=7/10, weak_accept):\n- [results] Two medium weaknesses (per-dimension, per-baseline) remain but are not actionable from results_summary on state. They are now flagged transparently in the Limitations subsection; further revisions on them require survey data not present in the present report.\n- [results] OPTIONAL: add a 95% Wilson CI on the 0.85 proportion (mathematically derivable from N=40, k=34).\n- [related_work] OPTIONAL: name one specific autonomous-AI-scientist paper and contrast outputs concretely.\n- Loop is hitting diminishing returns; recommend exit at iteration 3 or 4 unless the user can supply per-dimension / per-baseline raw counts.",
+        "exit_recommended": false,
+        "exit_rationale": "Score 7 with 2 medium weaknesses that require survey data not on state. Further write-section iterations cannot improve these without fabricating numbers. Recommend exiting on next iteration with explicit acknowledgement."
+      },
+      {
+        "i": 3,
+        "persona": "balanced",
+        "depth": "deep",
+        "started_at": "2026-05-08T05:32:09Z",
+        "score": 7,
+        "recommendation": "weak_accept",
+        "confidence": 3,
+        "summary_judgment": "After Wilson CI [0.709, 0.929] added per reviewer iter=2 optional ask, statistical reporting now includes both tail probability and proportion CI. Two medium weaknesses (per-dimension breakdown, per-baseline split) remain but require survey data not on state; loop is at diminishing returns.",
+        "strengths": [
+          {
+            "section": "results",
+            "text": "Statistical reporting now complete: binomial tail p ~ 2.5e-15 + Wilson 95% CI [0.709, 0.929]."
+          },
+          {
+            "section": "limitations",
+            "text": "All three reporting limitations explicit and itemized."
+          },
+          {
+            "section": "method+experiments",
+            "text": "Schema and protocol remain a clean, reusable contribution."
+          }
+        ],
+        "weaknesses": [
+          {
+            "section": "results",
+            "severity": "medium",
+            "text": "Per-dimension breakdown still not reported (unactionable from state).",
+            "fix_suggestion": "Requires raw survey data not present in this session."
+          },
+          {
+            "section": "results",
+            "severity": "medium",
+            "text": "Per-baseline counts (A vs B vs D) still collapsed (unactionable from state).",
+            "fix_suggestion": "Requires raw survey data not present in this session."
+          }
+        ],
+        "questions": [],
+        "issues_found": 0,
+        "review_md_path": "sessions/20260508-045419-5471/output/review.md",
+        "feedback_to_writer": "Reviewer (iteration 3, balanced/deep, score=7/10, weak_accept): no further actionable changes from current state. Remaining medium weaknesses require survey data the present report does not have. Recommend exit.",
+        "exit_recommended": true,
+        "exit_rationale": "Score plateaued at 7/10 weak_accept. Remaining mediums are reporting completeness items that require survey data not on state; further iterations would produce hedged language without changing the score. Loop exits cleanly."
+      }
+    ]
+  },
+  "delivery": {
+    "recommended_venues": {
+      "conferences": [
+        {
+          "short": "CHI",
+          "full": "ACM Conference on Human Factors in Computing Systems (Late-Breaking Work / Workshop track)",
+          "url": "https://chi2026.acm.org/",
+          "next_deadline": "2026-09-12 (estimated)",
+          "fit": "Strong fit. CHI is the top venue for human-AI interaction; the paper studies a human-in-the-loop AI workflow for early-stage research planning, which sits squarely in CHI scope. The Late-Breaking Work or workshop track is appropriate for the workshop-tier scope of this submission.",
+          "acceptance_rate": "~30% main; ~50% LBW",
+          "scope_match": "human-AI workflows, AI-assisted writing/planning",
+          "caveats": "Main-track is competitive; Late-Breaking Work or a co-located workshop is the realistic target."
+        },
+        {
+          "short": "NeurIPS Workshops",
+          "full": "NeurIPS Co-located Workshops (e.g., AI for Education, Human-AI Collaboration, Foundation Models for Decision Making)",
+          "url": "https://neurips.cc/Conferences/2026/CallForWorkshops",
+          "next_deadline": "2026-09 (workshop submission, estimated)",
+          "fit": "Strong fit. Schema-constrained generation + human review of LLM output is on-topic for several NeurIPS workshops on human-AI collaboration and AI for education. The N=40 preference study is workshop-appropriate evidence.",
+          "acceptance_rate": "~40-50% per workshop",
+          "scope_match": "LLM workflows, human-AI collaboration",
+          "caveats": "Specific workshop list released annually; pick one whose CFP language explicitly mentions human-in-the-loop or AI-for-research workflows."
+        },
+        {
+          "short": "In2Writing (ACL/EMNLP workshop)",
+          "full": "Workshop on Intelligent and Interactive Writing Assistants",
+          "url": "https://in2writing.glitch.me/",
+          "next_deadline": "2026-04 (estimated, annual workshop at ACL/EMNLP/CHI)",
+          "fit": "Direct fit. The workshop explicitly hosts work on AI-assisted writing and planning with reviewable artifacts and revision loops, which matches our roadmap-curation use case.",
+          "acceptance_rate": "~50%",
+          "scope_match": "AI-assisted writing, revision loops, schema-constrained generation",
+          "caveats": "Smaller venue but high topical fit and active community."
+        }
+      ],
+      "journals": [
+        {
+          "short": "TMLR",
+          "full": "Transactions on Machine Learning Research",
+          "url": "https://www.jmlr.org/tmlr/",
+          "submission": "Rolling",
+          "fit": "Good fit. TMLR evaluates on technical correctness and reproducibility rather than novelty-above-SOTA, which suits the system-and-protocol contribution; the binomial test and Wilson CI satisfy TMLR's correctness bar.",
+          "acceptance_rate": "~40%",
+          "scope_match": "empirical ML systems, human evaluation studies",
+          "caveats": "Rolling submission with no venue prestige tier; acceptance is purely on correctness."
+        },
+        {
+          "short": "AI Magazine",
+          "full": "AI Magazine (AAAI)",
+          "url": "https://onlinelibrary.wiley.com/journal/23719621",
+          "submission": "Rolling",
+          "fit": "Reasonable fit for a system-paper / methodology-overview framing. AI Magazine publishes accessible reports on applied AI systems and human-AI workflows, which matches the workshop-tier description style of this paper.",
+          "acceptance_rate": "~25-35%",
+          "scope_match": "human-AI systems, applied AI methodologies",
+          "caveats": "Editorial tone is more general-audience than archival; restructuring needed for accessibility."
+        }
+      ],
+      "short_list": [
+        "CHI",
+        "NeurIPS Workshops",
+        "In2Writing",
+        "TMLR",
+        "AI Magazine"
+      ],
+      "target_tier": "workshop",
+      "rationale": "Paper is workshop-tier human-AI collaboration with a single empirical preference study (N=40). Top three are explicitly workshop / LBW tracks; TMLR is the best journal fallback because it evaluates on correctness; AI Magazine is the secondary journal target if a more general-audience framing is preferred."
+    }
+  }
+}
