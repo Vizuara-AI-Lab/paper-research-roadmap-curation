@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A Human-in-the-Loop LLM Workflow for Research Roadmap Curation</title>
+  <meta name="description" content="A schema-constrained, human-reviewed LLM workflow for research roadmap curation. Preferred 34/40 (85%) by evaluators over three unstructured ChatGPT baselines.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <a class="brand" href="#top">Roadmap Curation</a>
+      <ul class="nav-links">
+        <li><a href="#abstract">Abstract</a></li>
+        <li><a href="#contributions">Contributions</a></li>
+        <li><a href="#method">Method</a></li>
+        <li><a href="#results">Results</a></li>
+        <li><a href="#cite">Cite</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a class="pill" href="paper.pdf">Paper (PDF)</a>
+        <a class="pill pill-outline" href="https://github.com/Vizuara-AI-Lab/paper-research-roadmap-curation">Code</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+
+    <header class="hero">
+      <p class="eyebrow">Human-AI Collaboration  ·  LLM Workflows  ·  Research Planning</p>
+      <h1>Schema-constrained, human-reviewed roadmaps beat unstructured prompting 34&nbsp;to&nbsp;6.</h1>
+      <p class="lede">A workflow that converts a vague research idea into a structured, twelve-component roadmap, materializes it as a reviewable PDF, and routes it to a human reviewer who approves or requests revisions. In a four-way anonymized human preference study with N=40 evaluators, our schema-constrained variant was preferred over three unstructured ChatGPT baselines.</p>
+      <dl class="metadata-grid">
+        <div><dt>Authors</dt><dd>Joshi, Abraar, Dwivedi, Dandekar &times;3</dd></div>
+        <div><dt>Primary metric</dt><dd>Overall preference</dd></div>
+        <div><dt>Result</dt><dd><strong>34 / 40 (85%)</strong></dd></div>
+        <div><dt>Evaluators</dt><dd>N = 40</dd></div>
+        <div><dt>Roadmap variants</dt><dd>4 (anonymized A/B/C/D)</dd></div>
+        <div><dt>Schema components</dt><dd>12</dd></div>
+        <div><dt>Statistical test</dt><dd>Binomial tail, p &approx; 2.5 &times; 10<sup>&minus;15</sup></dd></div>
+        <div><dt>95% Wilson CI</dt><dd>[0.709, 0.929]</dd></div>
+        <div><dt>License</dt><dd>MIT</dd></div>
+      </dl>
+    </header>
+
+    <section id="abstract" class="section-narrow">
+      <h2><span class="section-num">01</span> Abstract</h2>
+      <p>Early-stage research often begins with vague ideas that are not yet executable. While large language models can assist with research planning, unstructured prompting often produces roadmaps that are fluent but generic, difficult to verify, or poorly scoped. We present a human-in-the-loop LLM workflow for research roadmap curation that converts a raw research idea into a structured, reviewable artifact. The workflow is model-agnostic: it conditions on a twelve-component roadmap schema and reference templates, generates LaTeX source asynchronously, compiles a PDF, and routes the result to a human reviewer who may approve or request revisions. We evaluate the workflow with a human preference study in which 40 evaluators compared four anonymized roadmaps generated for the same research idea, three from unstructured LLM baselines and one from our workflow. Across the cohort, 34 of 40 evaluators (85%) selected the schema-constrained, human-reviewed roadmap as the strongest overall, with the remaining six votes split across the three baselines.</p>
+    </section>
+
+    <section id="contributions">
+      <h2><span class="section-num">02</span> Contributions</h2>
+      <div class="card-grid">
+        <article class="card">
+          <p class="card-num">01</p>
+          <h3>Workflow framing</h3>
+          <p>We formulate research roadmap generation as a human-in-the-loop workflow rather than a one-shot generation task. The reviewer is treated as a first-class participant in the system, not as the prompt author.</p>
+        </article>
+        <article class="card">
+          <p class="card-num">02</p>
+          <h3>Twelve-component schema</h3>
+          <p>A structured schema decomposes early-stage research planning into intellectual, evaluation, and execution structure: questions, literature, datasets, methodology, baselines, metrics, ablations, milestones, risks, deliverables, and a minimum viable claim.</p>
+        </article>
+        <article class="card">
+          <p class="card-num">03</p>
+          <h3>Anonymized preference study</h3>
+          <p>A four-way preference protocol compares roadmaps generated for the same idea by three unstructured general-purpose LLM baselines and our schema-constrained workflow, scored by N=40 evaluators across five quality dimensions.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="method">
+      <h2><span class="section-num">03</span> How it works</h2>
+      <p class="section-lede">Five stages, with explicit human approval before delivery.</p>
+      <div class="card-grid">
+        <article class="card">
+          <p class="card-num">01</p>
+          <h3>Idea submission</h3>
+          <p>A user submits a raw research idea and any optional constraints (duration, target output, available data or compute).</p>
+        </article>
+        <article class="card">
+          <p class="card-num">02</p>
+          <h3>Structured generation</h3>
+          <p>An LLM backend generates a roadmap using the fixed twelve-component schema and a small library of reference templates. Schema-constrained, not free-form.</p>
+        </article>
+        <article class="card">
+          <p class="card-num">03</p>
+          <h3>Artifact creation</h3>
+          <p>The roadmap is converted into a reviewable artifact: in our prototype, a LaTeX source file that compiles to a PDF.</p>
+        </article>
+        <article class="card">
+          <p class="card-num">04</p>
+          <h3>Human review</h3>
+          <p>A reviewer (mentor, supervisor, instructor, or the researcher themselves) inspects the roadmap and either approves it or requests changes. Feasibility, novelty calibration, and scientific correctness sit on the human side.</p>
+        </article>
+        <article class="card">
+          <p class="card-num">05</p>
+          <h3>Revision or delivery</h3>
+          <p>If revisions are requested, the workflow regenerates or edits the roadmap using the reviewer's feedback. If approved, the roadmap is delivered. The job state machine supports queued, processing, completed, failed, revision-requested, and revision-processing states.</p>
+        </article>
+      </div>
+
+      <figure class="wide-figure">
+        <img src="figures/fig-workflow-overview.png" alt="End-to-end workflow with five stages connecting idea submission, structured generation, artifact creation, human review, and delivery or revision.">
+        <figcaption>Figure 1 &mdash; End-to-end human-in-the-loop research roadmap workflow. The revision branch loops back into structured generation.</figcaption>
+      </figure>
+
+      <figure class="wide-figure">
+        <img src="figures/fig-roadmap-schema.png" alt="A 3-by-4 grid of twelve schema components grouped into intellectual, evaluation, and execution structure.">
+        <figcaption>Figure 2 &mdash; Twelve-component roadmap schema. Intellectual structure (blue), evaluation structure (green), execution structure (yellow).</figcaption>
+      </figure>
+    </section>
+
+    <section id="results">
+      <h2><span class="section-num">04</span> What we found</h2>
+      <p class="section-lede">Evaluators consistently preferred the schema-constrained, human-reviewable roadmap.</p>
+
+      <div class="big-metric">
+        <span class="metric-value">34 / 40</span>
+        <span class="metric-label">overall preference for our workflow (85%)</span>
+      </div>
+
+      <p>Each of the 40 evaluators was shown four anonymized roadmaps (A, B, C, D), generated for the same research idea from the same input prompt. Three were produced by general-purpose LLM backends invoked with an unstructured planning prompt; one was produced by our schema-constrained, human-in-the-loop workflow. The label-to-system mapping was hidden. When asked to select the strongest roadmap overall, 34 of 40 evaluators (85%) selected our workflow's variant; the remaining 6 votes (15%) were distributed across the three unstructured baselines.</p>
+
+      <p>Under the null hypothesis that evaluators choose uniformly at random among the four roadmaps (chance probability 0.25 per variant), the probability of observing 34 or more votes for any single variant out of 40 is approximately <strong>2.5 &times; 10<sup>&minus;15</sup></strong> (binomial tail). The 95% Wilson confidence interval on the underlying preference proportion is <strong>[0.709, 0.929]</strong>, so the lower bound stays well above chance even when accounting for sampling variability at N=40.</p>
+
+      <figure class="wide-figure">
+        <img src="figures/fig-main-results.png" alt="Bar chart with two bars: Roadmap C (our workflow) at 34, combined baselines A+B+D at 6.">
+        <figcaption>Figure 5 &mdash; Overall preference among N=40 evaluators. Per-baseline counts (A vs. B vs. D) were not separated in the survey instrument; the 6 non-C votes are reported as a combined total.</figcaption>
+      </figure>
+    </section>
+
+    <section id="context" class="section-narrow">
+      <h2><span class="section-num">05</span> What this is and isn't</h2>
+      <p><strong>What it is.</strong> A practical workflow and protocol for early-stage research planning. Schema-constrained generation, reviewable artifacts, and explicit human approval combine to produce roadmaps that early-stage researchers and mentors recognize as more usable than fluent but unconstrained LLM output.</p>
+      <p><strong>What it isn't.</strong> Autonomous research generation. We do not claim that an LLM can determine scientific truth or independently supervise research. We claim that an LLM, when constrained by a schema and placed inside a human review loop, can help produce better first-pass research plans. The reviewer remains responsible for feasibility, novelty calibration, and scientific correctness.</p>
+      <p><strong>Reporting limitations we are explicit about.</strong> Per-dimension tallies (completeness, feasibility, specificity, experiment design, research potential) and per-baseline counts (A vs. B vs. D) were not separately aggregated for this report; the cohort skews toward early-stage researchers and bootcamp mentors. Long-term project outcomes (milestone completion, mentor intervention rate, final paper quality) are left to future work.</p>
+    </section>
+
+    <section id="next">
+      <h2><span class="section-num">06</span> Where to go next</h2>
+      <div class="cta-grid">
+        <a class="cta-card" href="paper.pdf">
+          <p class="cta-num">01</p>
+          <h3>Read the paper <span class="arrow">&rarr;</span></h3>
+          <p>13-page PDF with the full workflow, evaluation protocol, and limitations.</p>
+        </a>
+        <a class="cta-card" href="https://github.com/Vizuara-AI-Lab/paper-research-roadmap-curation">
+          <p class="cta-num">02</p>
+          <h3>See the code <span class="arrow">&rarr;</span></h3>
+          <p>GitHub repository with paper source, figures, references, and session state.</p>
+        </a>
+        <a class="cta-card" href="https://github.com/Vizuara-AI-Lab/paper-research-roadmap-curation#how-to-reproduce-the-survey-analysis">
+          <p class="cta-num">03</p>
+          <h3>Reproduce <span class="arrow">&rarr;</span></h3>
+          <p>One Python snippet recomputes the binomial p-value and Wilson CI from the public counts.</p>
+        </a>
+        <a class="cta-card" href="#cite">
+          <p class="cta-num">04</p>
+          <h3>Cite <span class="arrow">&rarr;</span></h3>
+          <p>BibTeX entry with one-click copy.</p>
+        </a>
+      </div>
+    </section>
+
+    <section id="cite" class="section-narrow">
+      <h2><span class="section-num">07</span> Cite</h2>
+      <div class="cite-block">
+        <button type="button" class="cite-copy-btn" data-target="cite-bibtex" aria-label="Copy BibTeX to clipboard">Copy</button>
+        <pre><code id="cite-bibtex">@misc{joshi2026roadmap,
+  title  = {A Human-in-the-Loop LLM Workflow for Research Roadmap Curation},
+  author = {Joshi, Prathamesh and Abraar and Dwivedi, Naman and Dandekar, Raj and Dandekar, Rajat and Dandekar, Sreedath},
+  year   = {2026},
+  note   = {Preprint},
+  url    = {https://github.com/Vizuara-AI-Lab/paper-research-roadmap-curation},
+}</code></pre>
+      </div>
+      <script>
+        (function () {
+          document.querySelectorAll('.cite-copy-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var targetId = btn.getAttribute('data-target');
+              var codeEl = document.getElementById(targetId);
+              if (!codeEl) return;
+              var text = codeEl.innerText;
+              var done = function () {
+                btn.classList.add('is-copied');
+                var orig = btn.textContent;
+                btn.textContent = 'Copied';
+                setTimeout(function () {
+                  btn.textContent = orig;
+                  btn.classList.remove('is-copied');
+                }, 1500);
+              };
+              if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(done, function () {
+                  fallback();
+                });
+              } else {
+                fallback();
+              }
+              function fallback() {
+                var range = document.createRange();
+                range.selectNode(codeEl);
+                var sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+                sel.removeAllRanges();
+              }
+            });
+          });
+        })();
+      </script>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <p class="footer-mark">Roadmap Curation</p>
+        <p class="footer-tag">A schema-constrained, human-reviewed LLM workflow for converting vague research ideas into executable roadmaps.</p>
+      </div>
+      <div class="footer-col">
+        <p class="footer-h">Navigate</p>
+        <ul>
+          <li><a href="#abstract">Abstract</a></li>
+          <li><a href="#contributions">Contributions</a></li>
+          <li><a href="#method">Method</a></li>
+          <li><a href="#results">Results</a></li>
+          <li><a href="#cite">Cite</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <p class="footer-h">External</p>
+        <ul>
+          <li><a href="paper.pdf">Paper (PDF)</a></li>
+          <li><a href="https://github.com/Vizuara-AI-Lab/paper-research-roadmap-curation">Code repository</a></li>
+          <li><a href="https://github.com/Vizuara-AI-Lab/paper-research-roadmap-curation/blob/main/review.md">Peer review</a></li>
+        </ul>
+      </div>
+      <div class="footer-copy">
+        <p>&copy; 2026 Joshi, Abraar, Dwivedi, Dandekar, Dandekar, Dandekar. MIT License.</p>
+        <p>Session id: 20260508-045419-5471.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
